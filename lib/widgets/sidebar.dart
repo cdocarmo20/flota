@@ -40,40 +40,40 @@ class CustomSidebar extends StatelessWidget {
                   // 1. Ítem Simple
                   _navItem(context, Icons.dashboard, "Inicio", "/", isExpanded),
 
-                  if (rol == UserRole.cliente) ...[
-                    _navItem(
-                      context,
-                      Icons.add_road,
-                      "Pedir Viaje",
-                      "/solicitar-viaje",
-                      isExpanded,
-                    ),
+                  // if (rol == UserRole.cliente) ...[
+                  _navItem(
+                    context,
+                    Icons.add_road,
+                    "Pedir Viaje",
+                    "/solicitar-viaje",
+                    isExpanded,
+                  ),
 
-                    _navItem(
-                      context,
-                      Icons.alternate_email,
-                      "Mis Viajes",
-                      "/mis-viajes",
-                      isExpanded,
-                    ),
-                  ],
-                  if (rol == UserRole.transportista) ...[
-                    _navItem(
-                      context,
-                      Icons.local_shipping_rounded,
-                      "Mi Flota",
-                      "/flota",
-                      isExpanded,
-                    ),
-                    _navItem(
-                      context,
-                      Icons.local_mall,
-                      "Cargas Disponibles",
-                      "/cargas-disponibles",
-                      isExpanded,
-                    ),
-                  ],
+                  _navItem(
+                    context,
+                    Icons.alternate_email,
+                    "Mis Viajes",
+                    "/mis-viajes",
+                    isExpanded,
+                  ),
+                  // ],
+                  // if (rol == UserRole.transportista) ...[
+                  _navItem(
+                    context,
+                    Icons.local_shipping_rounded,
+                    "Mi Flota",
+                    "/flota",
+                    isExpanded,
+                  ),
+                  _navItem(
+                    context,
+                    Icons.local_mall,
+                    "Cargas Disponibles",
+                    "/cargas-disponibles",
+                    isExpanded,
+                  ),
 
+                  // ],
                   if (rol == UserRole.admin) ...[
                     _navItem(
                       context,

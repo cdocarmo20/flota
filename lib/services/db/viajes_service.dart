@@ -7,26 +7,81 @@ class ViajesService {
   final _supabase = Supabase.instance.client;
 
   Future<void> crearViaje(Map<String, dynamic> datos) async {
+    final userId = _supabase.auth.currentUser?.id;
+
+    await _supabase.from('viajes').insert({
+      'creador_id': userId, // Puede ser un cliente o un transportista
+      'origen_id': datos['origen_id'],
+      'destino_id': datos['destino_id'],
+      'descripcion_carga': datos['descripcion'],
+      'peso_estimado': datos['peso'],
+      'precio_ofertado': datos['precio'],
+      'estado': 'PENDIENTE',
+    });
+  }
+
+  // Future<void> crearViaje(Map<String, dynamic> datos) async {
+  //   try {
+  //     // 1. Obtener el ID del usuario logueado actualmente
+  //     final userId = _supabase.auth.currentUser?.id;
+
+  //     if (userId == null) throw Exception("Usuario no autenticado");
+
+  //     // 2. Insertar con el ID del cliente
+  //     await _supabase.from('viajes').insert({
+  //       'cliente_id': userId, // Este campo es obligatorio en la DB
+  //       'origen_id': datos['origen_id'],
+  //       'destino_id': datos['destino_id'],
+  //       'descripcion_carga': datos['descripcion'],
+  //       'peso_estimado': datos['peso'],
+  //       'precio_ofertado': datos['precio'],
+  //       'estado': 'PENDIENTE',
+  //     });
+  //   } catch (e) {
+  //     print("Error detallado en Supabase: $e");
+  //     throw Exception("No se pudo guardar el viaje: $e");
+  //   }
+  // }
+
+  // En lib/services/viajes_service.dart
+
+  Future<List<Map<String, dynamic>>> fetchCargasFiltradas({
+    String? origenId,
+    String? destinoId,
+    double? pesoMaximo,
+  }) async {
     try {
-      // 1. Obtener el ID del usuario logueado actualmente
-      final userId = _supabase.auth.currentUser?.id;
+      var query = _supabase
+          .from('viajes')
+          .select('''
+          *,
+          origen:localidades!origen_id(nombre),
+          destino:localidades!destino_id(nombre),
+          creador:clientes!creador_id(nombre, mail, celular) 
+        ''') // <--- CAMBIO AQUÍ: Usamos creador_id
+          .eq('estado', 'PENDIENTE');
 
-      if (userId == null) throw Exception("Usuario no autenticado");
+      // ... resto de tus filtros (eq origen, eq destino, lte peso)
 
-      // 2. Insertar con el ID del cliente
-      await _supabase.from('viajes').insert({
-        'cliente_id': userId, // Este campo es obligatorio en la DB
-        'origen_id': datos['origen_id'],
-        'destino_id': datos['destino_id'],
-        'descripcion_carga': datos['descripcion'],
-        'peso_estimado': datos['peso'],
-        'precio_ofertado': datos['precio'],
-        'estado': 'PENDIENTE',
-      });
+      final response = await query.order('fecha_solicitud', ascending: false);
+      return List<Map<String, dynamic>>.from(response);
     } catch (e) {
-      print("Error detallado en Supabase: $e");
-      throw Exception("No se pudo guardar el viaje: $e");
+      print("Error en fetchCargasFiltradas: $e");
+      return [];
     }
+  }
+
+  Future<void> aceptarYAsignarViaje(String viajeId, String vehiculoId) async {
+    final transportistaId = _supabase.auth.currentUser!.id;
+
+    await _supabase
+        .from('viajes')
+        .update({
+          'transportista_id': transportistaId,
+          'vehiculo_id': vehiculoId,
+          'estado': 'ACEPTADO',
+        })
+        .match({'id': viajeId});
   }
 
   Future<List<Map<String, dynamic>>> fetchMisViajes() async {
