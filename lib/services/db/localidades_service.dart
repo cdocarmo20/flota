@@ -6,7 +6,7 @@ class LocalidadService {
   Future<List<Map<String, dynamic>>> fetchLocalidades() async {
     final response = await Supabase.instance.client
         .from('localidades')
-        .select('id, nombre')
+        .select('id, nombre, latitud, longitud')
         .order('nombre', ascending: true);
     return response as List<Map<String, dynamic>>;
   }

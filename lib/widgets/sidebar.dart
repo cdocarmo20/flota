@@ -39,40 +39,50 @@ class CustomSidebar extends StatelessWidget {
 
                   // 1. Ítem Simple
                   _navItem(context, Icons.dashboard, "Inicio", "/", isExpanded),
+                  if (rol != UserRole.admin) ...[
+                    // if (rol == UserRole.cliente) ...[
+                    _navItem(
+                      context,
+                      Icons.add_road,
+                      "Publicar Carga",
+                      "/solicitar-viaje",
+                      isExpanded,
+                    ),
 
-                  // if (rol == UserRole.cliente) ...[
-                  _navItem(
-                    context,
-                    Icons.add_road,
-                    "Pedir Viaje",
-                    "/solicitar-viaje",
-                    isExpanded,
-                  ),
+                    _navItem(
+                      context,
+                      Icons.local_mall,
+                      "Cargas Disponibles",
+                      "/cargas-disponibles",
+                      isExpanded,
+                    ),
 
-                  _navItem(
-                    context,
-                    Icons.alternate_email,
-                    "Mis Viajes",
-                    "/mis-viajes",
-                    isExpanded,
-                  ),
-                  // ],
-                  // if (rol == UserRole.transportista) ...[
-                  _navItem(
-                    context,
-                    Icons.local_shipping_rounded,
-                    "Mi Flota",
-                    "/flota",
-                    isExpanded,
-                  ),
-                  _navItem(
-                    context,
-                    Icons.local_mall,
-                    "Cargas Disponibles",
-                    "/cargas-disponibles",
-                    isExpanded,
-                  ),
+                    _navItem(
+                      context,
+                      Icons.reorder,
+                      "Mis Cargas Publicadas",
+                      "/mis-viajes",
+                      isExpanded,
+                    ),
 
+                    _navItem(
+                      context,
+                      Icons.airplane_ticket_outlined,
+                      "Mis Cargas Aceptadas",
+                      "/mis-viajes",
+                      isExpanded,
+                    ),
+
+                    // ],
+                    // if (rol == UserRole.transportista) ...[
+                    _navItem(
+                      context,
+                      Icons.local_shipping_rounded,
+                      "Mi Flota",
+                      "/flota",
+                      isExpanded,
+                    ),
+                  ],
                   // ],
                   if (rol == UserRole.admin) ...[
                     _navItem(
@@ -101,25 +111,27 @@ class CustomSidebar extends StatelessWidget {
 
                     _navItem(
                       context,
+                      Icons.alternate_email,
+                      "Mis Viajes",
+                      "/mis-viajes",
+                      isExpanded,
+                    ),
+
+                    _navItem(
+                      context,
                       Icons.add_road,
-                      "Pedir Viaje",
+                      "Publicar Carga",
                       "/solicitar-viaje",
                       isExpanded,
                     ),
                     _navItem(
                       context,
                       Icons.local_mall,
-                      "Cargas Libres",
+                      "Cargas Disponibles",
                       "/cargas-disponibles",
                       isExpanded,
                     ),
-                    _navItem(
-                      context,
-                      Icons.alternate_email,
-                      "Mis Viajes",
-                      "/mis-viajes",
-                      isExpanded,
-                    ),
+
                     // 2. ÍTEM CON SUBMENÚ (Uso de ExpansionTile)
                     if (isExpanded)
                       Theme(

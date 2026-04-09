@@ -21,6 +21,32 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
   String? _filtroOrigen;
   String? _filtroDestino;
   double? _filtroPeso;
+  // bool _usarRadioCercania = false;
+  double _radioKm = 80.0;
+  List<Map<String, dynamic>> _localidades = []; // Aquí guardaremos la lista
+  String? _filtroOrigenId;
+  double? _latOrigenFiltro;
+  double? _lonOrigenFiltro;
+  DateTime? _fechaDesde;
+  DateTime? _fechaHasta;
+
+  String? _filtroDestinoId;
+  double? _latDestinoFiltro;
+  double? _lonDestinoFiltro;
+  bool _filtrarPorDestino = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _cargarLocalidades();
+  }
+
+  Future<void> _cargarLocalidades() async {
+    final datos = await LocalidadService().fetchLocalidades();
+    setState(() {
+      _localidades = datos;
+    });
+  }
 
   Widget _buildSimpleDropdown(
     String label,
@@ -53,69 +79,241 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
     );
   }
 
-  Widget _buildFiltros() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: Colors.indigo.withOpacity(0.05),
-      child: Row(
-        children: [
-          // Filtro Origen
-          Expanded(
-            child: _buildSimpleDropdown("Origen", _filtroOrigen, (val) {
-              setState(() => _filtroOrigen = val);
-            }),
-          ),
-          const SizedBox(width: 10),
-          // Filtro Destino
-          Expanded(
-            child: _buildSimpleDropdown("Destino", _filtroDestino, (val) {
-              setState(() => _filtroDestino = val);
-            }),
-          ),
-          // Botón Limpiar
-          IconButton(
-            onPressed:
-                () => setState(() {
-                  _filtroOrigen = null;
-                  _filtroDestino = null;
-                }),
-            icon: const Icon(Icons.filter_alt_off, color: Colors.red),
-            tooltip: "Limpiar filtros",
-          ),
-          Expanded(
-            child: TextFormField(
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: "Peso Máx (Ton)",
-                prefixIcon: Icon(Icons.scale),
-                border: OutlineInputBorder(),
-              ),
-              onChanged: (val) {
-                setState(() => _filtroPeso = double.tryParse(val));
-              },
-            ),
-          ),
-        ],
+  Widget _buildFiltroOrigen() {
+    return DropdownButtonFormField<String>(
+      value: _filtroOrigenId,
+      decoration: const InputDecoration(
+        labelText: "Origen",
+        border: OutlineInputBorder(),
       ),
+      items: [
+        const DropdownMenuItem(value: null, child: Text("Todas las ciudades")),
+        ..._localidades.map(
+          (loc) => DropdownMenuItem(
+            value: loc['id'].toString(),
+            child: Text(loc['nombre']),
+          ),
+        ),
+      ],
+      onChanged: (val) {
+        setState(() {
+          _filtroOrigenId = val;
+          if (val != null) {
+            // Buscamos la ciudad elegida para sacar su latitud y longitud
+            final loc = _localidades.firstWhere(
+              (l) => l['id'].toString() == val,
+            );
+            _latOrigenFiltro = loc['latitud'];
+            _lonOrigenFiltro = loc['longitud'];
+          } else {
+            _latOrigenFiltro = null;
+            _lonOrigenFiltro = null;
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildFiltrosAvanzados() {
+    return Card(
+      margin: const EdgeInsets.all(10),
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Column(
+          children: [
+            _buildFiltros(),
+
+            const SizedBox(height: 10),
+            // FILTRO DE RADIO (Slider)
+            Row(
+              children: [
+                SizedBox(
+                  width: 160,
+                  child: TextFormField(
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: "Peso Máx (Ton)",
+                      prefixIcon: Icon(Icons.scale),
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (val) {
+                      setState(() => _filtroPeso = double.tryParse(val));
+                    },
+                  ),
+                ),
+                const SizedBox(width: 20),
+                const Icon(Icons.radar, color: Colors.indigo),
+                const SizedBox(width: 10),
+                Text("Radio: ${_radioKm.round()} km"),
+                Expanded(
+                  child: Slider(
+                    value: _radioKm,
+                    min: 10,
+                    max: 500,
+                    divisions: 49,
+                    label: "${_radioKm.round()} km",
+                    onChanged: (val) => setState(() => _radioKm = val),
+                  ),
+                ),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final f = await showDatePicker(
+                        locale: const Locale('es', 'ES'),
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 90)),
+                      );
+                      if (f != null) setState(() => _fechaDesde = f);
+                    },
+                    icon: const Icon(Icons.calendar_today),
+                    label: Text(
+                      _fechaDesde == null
+                          ? "Fecha Desde"
+                          : "${_fechaDesde!.day}/${_fechaDesde!.month}",
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final f = await showDatePicker(
+                        locale: const Locale('es', 'ES'),
+                        context: context,
+                        initialDate: _fechaDesde ?? DateTime.now(),
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 90)),
+                      );
+                      if (f != null) setState(() => _fechaHasta = f);
+                    },
+                    icon: const Icon(Icons.calendar_month),
+                    label: Text(
+                      _fechaHasta == null
+                          ? "Fecha Hasta"
+                          : "${_fechaHasta!.day}/${_fechaHasta!.month}",
+                    ),
+                  ),
+                ),
+                if (_fechaDesde != null || _fechaHasta != null)
+                  IconButton(
+                    onPressed:
+                        () => setState(() {
+                          _fechaDesde = null;
+                          _fechaHasta = null;
+                        }),
+                    icon: const Icon(Icons.clear, color: Colors.red),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 10),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFiltroDestino() {
+    return DropdownButtonFormField<String>(
+      value: _filtroDestinoId,
+      decoration: const InputDecoration(
+        labelText: "Destino",
+        border: OutlineInputBorder(),
+      ),
+      items: [
+        const DropdownMenuItem(value: null, child: Text("Todas las ciudades")),
+        ..._localidades.map(
+          (loc) => DropdownMenuItem(
+            value: loc['id'].toString(),
+            child: Text(loc['nombre']),
+          ),
+        ),
+      ],
+      onChanged: (val) {
+        setState(() {
+          _filtroDestinoId = val;
+          if (val != null) {
+            // Buscamos la ciudad elegida para sacar su latitud y longitud
+            final loc = _localidades.firstWhere(
+              (l) => l['id'].toString() == val,
+            );
+            _latDestinoFiltro = loc['latitud'];
+            _lonDestinoFiltro = loc['longitud'];
+          } else {
+            _latDestinoFiltro = null;
+            _lonDestinoFiltro = null;
+          }
+        });
+      },
+    );
+  }
+
+  Widget _buildFiltros() {
+    return Row(
+      children: [
+        // Filtro Origen
+        Expanded(child: _buildFiltroOrigen()),
+        const SizedBox(width: 10),
+        // Filtro Destino
+        Expanded(child: _buildFiltroDestino()),
+        // Botón Limpiar
+        IconButton(
+          onPressed:
+              () => setState(() {
+                _filtroOrigen = null;
+                _filtroDestino = null;
+              }),
+          icon: const Icon(Icons.filter_alt_off, color: Colors.red),
+          tooltip: "Limpiar filtros",
+        ),
+        const SizedBox(width: 20),
+        Row(
+          children: [
+            const Text("Filtrar radio en: "),
+            ChoiceChip(
+              label: const Text("Origen"),
+              selected: !_filtrarPorDestino,
+              onSelected: (val) => setState(() => _filtrarPorDestino = false),
+            ),
+            const SizedBox(width: 8),
+            ChoiceChip(
+              label: const Text("Destino"),
+              selected: _filtrarPorDestino,
+              onSelected: (val) => setState(() => _filtrarPorDestino = true),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return PageLayout(
-      title: "Marketplace y Mis Viajes",
+      title: "Buscar Cargas",
       icon: Icons.local_shipping_outlined,
       child: Column(
         children: [
-          _buildFiltros(),
+          _buildFiltrosAvanzados(),
+
           Expanded(
             child: FutureBuilder<List<Map<String, dynamic>>>(
-              // Usamos la función que filtra según el rol que definimos antes
-              // future: _viajesService.fetchViajesSegunRol(),
-              future: _viajesService.fetchCargasFiltradas(
-                origenId: _filtroOrigen,
-                destinoId: _filtroDestino,
-                pesoMaximo: _filtroPeso,
+              future: _viajesService.fetchCargasCercanas(
+                // Si filtramos por destino, mandamos lat/lon del destino, sino del origen
+                lat:
+                    _filtrarPorDestino
+                        ? (_latDestinoFiltro ?? 0.0)
+                        : (_latOrigenFiltro ?? 0.0),
+                lon:
+                    _filtrarPorDestino
+                        ? (_lonDestinoFiltro ?? 0.0)
+                        : (_lonOrigenFiltro ?? 0.0),
+                radio: _radioKm,
+                buscarEnDestino:
+                    _filtrarPorDestino, // Le avisamos al SQL que busque en destino_id
+                fechaInicio: _fechaDesde,
+                fechaFin: _fechaHasta,
               ),
               builder: (context, snapshot) {
                 // print(snapshot.data.toString());
@@ -149,7 +347,7 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
     Map<String, dynamic> viaje,
   ) {
     String? vehiculoSeleccionadoId;
-    final cliente = viaje['cliente'];
+    final cliente = viaje['creador'];
 
     showDialog(
       context: context,
@@ -434,241 +632,5 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
     }
     // Aquí podrías usar url_launcher para abrir WhatsApp directamente
     AppService.showAlert("Llamando al cliente: $celular");
-  }
-
-  void _mostrarSelectorVehiculo(
-    BuildContext context,
-    Map<String, dynamic> viaje,
-  ) {
-    showDialog(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Row(
-              children: [
-                Icon(Icons.local_shipping, color: Colors.indigo),
-                SizedBox(width: 10),
-                Text("Asignar Vehículo"),
-              ],
-            ),
-            content: SizedBox(
-              width: 400,
-              // Usamos el servicio para traer solo los vehículos del transportista logueado
-              child: FutureBuilder<List<Vehiculo>>(
-                future: TransportistaService().fetchMisVehiculos(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const SizedBox(
-                      height: 100,
-                      child: Center(child: CircularProgressIndicator()),
-                    );
-                  }
-
-                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 20),
-                      child: Text(
-                        "No tienes vehículos registrados para asignar.",
-                      ),
-                    );
-                  }
-
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Text(
-                        "Selecciona la unidad que realizará el transporte:",
-                        style: TextStyle(fontSize: 13, color: Colors.grey),
-                      ),
-                      const SizedBox(height: 15),
-                      // Lista de vehículos
-                      ...snapshot.data!.map(
-                        (v) => Card(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          child: ListTile(
-                            leading: const Icon(Icons.badge_outlined),
-                            title: Text(
-                              v.patente,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text("${v.modelo} - ${v.capacidad}"),
-                            trailing: const Icon(
-                              Icons.check_circle_outline,
-                              color: Colors.indigo,
-                            ),
-                            onTap: () {
-                              Navigator.pop(context); // Cierra el modal
-                              _confirmarAceptacionViaje(
-                                viaje['id'],
-                                v,
-                              ); // Llama a la confirmación
-                            },
-                          ),
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancelar"),
-              ),
-            ],
-          ),
-    );
-  }
-
-  void _confirmarAceptacionViaje(String viajeId, Vehiculo vehiculo) {
-    AppService.runWithLoading(() async {
-      try {
-        // 1. Llamamos al servicio para actualizar transportista_id, vehiculo_id y estado
-        await _viajesService.asignarViajeAVehiculo(viajeId, vehiculo.id);
-
-        // 2. Refrescamos la UI
-        setState(() {});
-
-        AppService.showAlert(
-          "Viaje asignado con éxito al vehículo ${vehiculo.patente}",
-        );
-      } catch (e) {
-        AppService.showAlert("Error al asignar el viaje: $e");
-      }
-    });
-  }
-
-  // --- MÉTODOS DE ACCIÓN ---
-
-  Future<void> _cambiarEstadoViaje(
-    String id,
-    String nuevoEstado,
-    String mensaje,
-  ) async {
-    AppService.runWithLoading(() async {
-      await _viajesService.actualizarEstadoViaje(id, nuevoEstado);
-      setState(() {}); // Refrescar la lista
-      AppService.showAlert(mensaje);
-    });
-  }
-
-  // --- COMPONENTES VISUALES ---
-
-  Widget _buildActionButton(
-    Map<String, dynamic> viaje,
-    String label,
-    Color color,
-    VoidCallback onTap,
-  ) {
-    final String estado = viaje['estado'];
-    final String origenId = viaje['origen']['id'].toString();
-    final String? miLocalidadId = userLocalidad.value?['id']?.toString();
-
-    // VALIDACIÓN: Solo para "INICIAR VIAJE"
-    bool bloqueadoPorUbicacion = false;
-    if (estado == 'ACEPTADO' && miLocalidadId != origenId) {
-      bloqueadoPorUbicacion = true;
-    }
-
-    return Column(
-      children: [
-        SizedBox(
-          width: double.infinity,
-          height: 45,
-          child: ElevatedButton(
-            // Si está bloqueado, el botón no hace nada (onPressed: null)
-            onPressed: bloqueadoPorUbicacion ? null : onTap,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: color,
-              foregroundColor: Colors.white,
-              disabledBackgroundColor: Colors.grey.shade300,
-            ),
-            child: Text(label),
-          ),
-        ),
-        if (bloqueadoPorUbicacion)
-          const Padding(
-            padding: EdgeInsets.only(top: 8.0),
-            child: Text(
-              "⚠️ Debes estar en la localidad de origen para iniciar.",
-              style: TextStyle(
-                color: Colors.red,
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
-  // Widget _buildActionButton(String label, Color color, VoidCallback onTap) {
-  //   return SizedBox(
-  //     width: double.infinity,
-  //     height: 45,
-  //     child: ElevatedButton(
-  //       onPressed: onTap,
-  //       style: ElevatedButton.styleFrom(
-  //         backgroundColor: color,
-  //         foregroundColor: Colors.white,
-  //       ),
-  //       child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
-  //     ),
-  //   );
-  // }
-
-  Widget _buildStatusTag(String estado, bool esMio) {
-    Color color = esMio ? Colors.green : Colors.orange;
-    String texto = esMio ? "MI ASIGNACIÓN" : "DISPONIBLE";
-    if (estado == 'EN_VIAJE') texto = "EN TRÁNSITO";
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        texto,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildRouteInfo(String origen, String destino) {
-    return Row(
-      children: [
-        Text(origen, style: const TextStyle(fontWeight: FontWeight.bold)),
-        const Icon(Icons.chevron_right, color: Colors.indigo),
-        Text(destino, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ],
-    );
-  }
-
-  Widget _buildCargoDetails(Map<String, dynamic> viaje) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          "${viaje['descripcion_carga']} (${viaje['peso_estimado']} Ton)",
-          style: const TextStyle(color: Colors.grey),
-        ),
-        Text(
-          "\$${viaje['precio_ofertado']}",
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
-          ),
-        ),
-      ],
-    );
   }
 }

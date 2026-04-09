@@ -22,7 +22,9 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
   final _pesoCtrl = TextEditingController();
   double _precioSugerido = 0.0;
   double _tarifaPorTonelada = 1500.0; // Valor ejemplo (puedes cambiarlo)
-
+  DateTime? _fechaSeleccionada;
+  final TextEditingController _fechaController = TextEditingController();
+  final TextEditingController _tarifaController = TextEditingController();
   List<Map<String, dynamic>> _localidades = [];
   bool _isLoadingLoc = true;
 
@@ -39,11 +41,37 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
     });
   }
 
+  Future<void> _seleccionarFecha(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime.now(), // No permite fechas pasadas
+      lastDate: DateTime.now().add(
+        const Duration(days: 365),
+      ), // Hasta un año a futuro
+      locale: const Locale(
+        'es',
+        'ES',
+      ), // Asegúrate de tener configurado el soporte de idiomas
+    );
+
+    if (picked != null && picked != _fechaSeleccionada) {
+      setState(() {
+        _fechaSeleccionada = picked;
+        // Formateamos la fecha para mostrarla en el campo de texto
+        _fechaController.text = "${picked.day}/${picked.month}/${picked.year}";
+      });
+    }
+  }
+
   void _calcularPrecio() {
     final peso = double.tryParse(_pesoCtrl.text);
+    var tarifa = double.tryParse(_tarifaController.text);
+
+    tarifa ??= 0;
     if (peso != null) {
       setState(() {
-        _precioSugerido = peso * _tarifaPorTonelada;
+        _precioSugerido = peso * tarifa!;
       });
     } else {
       setState(() => _precioSugerido = 0.0);
@@ -87,6 +115,7 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
           'peso': double.tryParse(_pesoCtrl.text) ?? 0.0,
           'precio': _precioSugerido,
           'estado': 'PENDIENTE',
+          'fecha_viaje': _fechaSeleccionada?.toIso8601String(),
         };
 
         await ViajesService().crearViaje(datos);
@@ -105,125 +134,170 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
     return PageLayout(
       title: "Publicar Carga",
       icon: Icons.add_road_rounded,
-      child:
-          _isLoadingLoc
-              ? const Center(child: CircularProgressIndicator())
-              : SingleChildScrollView(
-                // Previene el error de RenderFlex
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        "Ruta del Viaje",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
+      child: Padding(
+        padding: const EdgeInsets.all(10.0),
+        child:
+            _isLoadingLoc
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                  // Previene el error de RenderFlex
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          "Ruta del Viaje",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      // DISEÑO RESPONSIVO DE RUTA
-                      LayoutBuilder(
-                        builder: (context, constraints) {
-                          bool isMobile = constraints.maxWidth < 600;
-                          return isMobile
-                              ? Column(children: _buildRouteFields())
-                              : Row(children: _buildRouteFields(isRow: true));
-                        },
-                      ),
-
-                      const SizedBox(height: 30),
-                      const Text(
-                        "Detalles de la Carga",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-
-                      _buildInput(
-                        _descCtrl,
-                        "Descripción de mercadería",
-                        Icons.inventory_2,
-                        maxLines: 3,
-                      ),
-                      const SizedBox(height: 20),
-                      _buildInput(
-                        _pesoCtrl,
-                        "Peso Estimado (Toneladas)",
-                        Icons.fitness_center,
-                        isNumber: true,
-                        onChanged:
-                            (_) => _calcularPrecio(), // Recalcula al escribir
-                      ),
-                      if (_precioSugerido > 0)
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 20),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.green.withOpacity(0.5),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: 200,
+                          child: TextFormField(
+                            controller: _fechaController,
+                            readOnly:
+                                true, // Evita que el usuario escriba manualmente
+                            decoration: const InputDecoration(
+                              labelText: "Fecha del Viaje",
+                              prefixIcon: Icon(Icons.calendar_today),
+                              border: OutlineInputBorder(),
+                              hintText: "Seleccione el día",
                             ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Precio Sugerido",
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Basado en $_tarifaPorTonelada por tonelada",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                "\$${_precioSugerido.toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
+                            onTap: () => _seleccionarFecha(context),
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Por favor seleccione una fecha';
+                              }
+                              return null;
+                            },
                           ),
                         ),
-                      const SizedBox(height: 40),
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: ElevatedButton.icon(
-                          onPressed: _enviarSolicitud,
-                          icon: const Icon(Icons.send_rounded),
-                          label: const Text("PUBLICAR SOLICITUD"),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.indigo,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
+                        const SizedBox(height: 20),
+                        // DISEÑO RESPONSIVO DE RUTA
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            bool isMobile = constraints.maxWidth < 600;
+                            return isMobile
+                                ? Column(children: _buildRouteFields())
+                                : Row(children: _buildRouteFields(isRow: true));
+                          },
+                        ),
+
+                        const SizedBox(height: 30),
+                        const Text(
+                          "Detalles de la Carga",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+
+                        _buildInput(
+                          _descCtrl,
+                          "Descripción de mercadería",
+                          Icons.inventory_2,
+                          maxLines: 3,
+                        ),
+                        const SizedBox(height: 20),
+                        Row(
+                          children: [
+                            const SizedBox(width: 200),
+                            Expanded(
+                              child: _buildInput(
+                                _pesoCtrl,
+                                "Peso Estimado (Toneladas)",
+                                Icons.fitness_center,
+                                isNumber: true,
+                                onChanged:
+                                    (_) =>
+                                        _calcularPrecio(), // Recalcula al escribir
+                              ),
+                            ),
+                            const SizedBox(width: 20),
+                            Expanded(
+                              child: _buildInput(
+                                _tarifaController,
+                                "Tarifa por Tonelada (\$)",
+                                Icons.fitness_center,
+                                isNumber: true,
+                                onChanged:
+                                    (_) =>
+                                        _calcularPrecio(), // Recalcula al escribir
+                              ),
+                            ),
+                            const SizedBox(width: 120),
+                          ],
+                        ),
+                        if (_precioSugerido > 0)
+                          Container(
+                            margin: const EdgeInsets.symmetric(vertical: 20),
+                            padding: const EdgeInsets.all(20),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.green.withOpacity(0.5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      "Precio Sugerido",
+                                      style: TextStyle(
+                                        color: Colors.green,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Basado en ${double.tryParse(_tarifaController.text)} por tonelada",
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Text(
+                                  "\$${_precioSugerido.toStringAsFixed(2)}",
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        const SizedBox(height: 40),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 55,
+                          child: ElevatedButton.icon(
+                            onPressed: _enviarSolicitud,
+                            icon: const Icon(Icons.send_rounded),
+                            label: const Text("PUBLICAR SOLICITUD"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.indigo,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
+      ),
     );
   }
 

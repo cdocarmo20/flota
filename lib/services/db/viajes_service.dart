@@ -16,34 +16,92 @@ class ViajesService {
       'descripcion_carga': datos['descripcion'],
       'peso_estimado': datos['peso'],
       'precio_ofertado': datos['precio'],
+      'fecha_viaje': datos['fecha_viaje'],
       'estado': 'PENDIENTE',
     });
   }
 
-  // Future<void> crearViaje(Map<String, dynamic> datos) async {
-  //   try {
-  //     // 1. Obtener el ID del usuario logueado actualmente
-  //     final userId = _supabase.auth.currentUser?.id;
+  Future<List<Map<String, dynamic>>> obtenerMisCargasSolicitadas() async {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
 
-  //     if (userId == null) throw Exception("Usuario no autenticado");
+    return await Supabase.instance.client
+        .from('viajes')
+        .select('''
+        *,
+        origen:localidades!origen_id(nombre),
+        destino:localidades!destino_id(nombre),
+        transportista:transportista_id(nombre, telefono)
+        ''')
+        .eq('creador_id', userId)
+        .order('fecha_viaje', ascending: false); // Usamos tu campo real
+  }
 
-  //     // 2. Insertar con el ID del cliente
-  //     await _supabase.from('viajes').insert({
-  //       'cliente_id': userId, // Este campo es obligatorio en la DB
-  //       'origen_id': datos['origen_id'],
-  //       'destino_id': datos['destino_id'],
-  //       'descripcion_carga': datos['descripcion'],
-  //       'peso_estimado': datos['peso'],
-  //       'precio_ofertado': datos['precio'],
-  //       'estado': 'PENDIENTE',
-  //     });
-  //   } catch (e) {
-  //     print("Error detallado en Supabase: $e");
-  //     throw Exception("No se pudo guardar el viaje: $e");
+  Future<List<Map<String, dynamic>>> fetchCargasCercanas({
+    required double? lat,
+    required double? lon,
+    required double radio,
+    bool buscarEnDestino = false,
+    DateTime? fechaInicio, // Si viene null, no filtra
+    DateTime? fechaFin,
+  }) async {
+    try {
+      final Map<String, dynamic> parametros = {
+        'lat_ref': lat,
+        'lon_ref': lon,
+        'radio_km': radio,
+        'por_destino': buscarEnDestino,
+        'fecha_inicio': fechaInicio?.toIso8601String(),
+        'fecha_fin': fechaFin?.toIso8601String(), // Enviará null si es null
+      };
+
+      final List<dynamic> response = await _supabase.rpc(
+        'buscar_viajes_cercanos',
+        params: parametros,
+      );
+
+      // Llamada a la función RPC
+
+      if (response == null) return [];
+
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      // Si falla la búsqueda geográfica, intentamos una carga normal por seguridad
+      final fallback = await _supabase
+          .from('viajes')
+          .select(
+            '*, origen:localidades!origen_id(nombre), destino:localidades!destino_id(nombre), creador:clientes!creador_id(nombre, mail, celular)',
+          )
+          .eq('estado', 'PENDIENTE');
+      return List<Map<String, dynamic>>.from(fallback);
+    }
+  }
+
+  // Future<List<Map<String, dynamic>>> fetchCargasCercanas({
+  //   double? lat,
+  //   double? lon,
+  //   double? radio,
+  //   String? destinoId,
+  // }) async {
+  //   print(lat.toString());
+  //   // CASO A: Si el usuario eligió un Origen y quiere ver a la redonda (80km)
+  //   if (lat != null && lon != null && radio != null) {
+  //     final List<dynamic> response = await _supabase.rpc(
+  //       'buscar_viajes_cercanos',
+  //       params: {'lat_origen': lat, 'lon_origen': lon, 'radio_km': radio},
+  //     );
+  //     return List<Map<String, dynamic>>.from(response);
   //   }
-  // }
 
-  // En lib/services/viajes_service.dart
+  //   // CASO B: Búsqueda normal sin radio (todos los viajes o solo por destino)
+  //   var query = _supabase
+  //       .from('viajes')
+  //       .select('*, ...')
+  //       .eq('estado', 'PENDIENTE');
+  //   if (destinoId != null) query = query.eq('destino_id', destinoId);
+
+  //   final res = await query.order('fecha_solicitud');
+  //   return List<Map<String, dynamic>>.from(res);
+  // }
 
   Future<List<Map<String, dynamic>>> fetchCargasFiltradas({
     String? origenId,
@@ -73,46 +131,56 @@ class ViajesService {
 
   Future<void> aceptarYAsignarViaje(String viajeId, String vehiculoId) async {
     final transportistaId = _supabase.auth.currentUser!.id;
+    try {
+      await _supabase
+          .from('viajes')
+          .update({
+            'transportista_id': transportistaId,
+            'vehiculo_id': vehiculoId,
+            'estado': 'ACEPTADO',
+            'fecha_aceptacion': DateTime.now().toIso8601String(),
+          })
+          .eq('id', viajeId.toString());
 
-    await _supabase
-        .from('viajes')
-        .update({
-          'transportista_id': transportistaId,
-          'vehiculo_id': vehiculoId,
-          'estado': 'ACEPTADO',
-        })
-        .match({'id': viajeId});
+      // if (response.isEmpty) {
+      //   print("⚠️ No se encontró el viaje o RLS bloqueó la edición.");
+      // } else {
+      //   print("✅ Viaje actualizado: ${response[0]}");
+      // }
+    } catch (e) {
+      print("❌ Error real capturado: $e");
+    }
   }
 
-  Future<List<Map<String, dynamic>>> fetchMisViajes() async {
-    final userId = _supabase.auth.currentUser?.id;
+  // Future<List<Map<String, dynamic>>> fetchMisViajes() async {
+  //   final userId = _supabase.auth.currentUser?.id;
 
-    final response = await _supabase
-        .from('viajes')
-        .select('''
-          *,
-          origen:localidades!origen_id(nombre),
-          destino:localidades!destino_id(nombre),
-          transportista:transportistas(nombre, telefono)
-        ''')
-        .eq('cliente_id', userId as Object)
-        .order('fecha_solicitud', ascending: false);
+  //   final response = await _supabase
+  //       .from('viajes')
+  //       .select('''
+  //         *,
+  //         origen:localidades!origen_id(nombre),
+  //         destino:localidades!destino_id(nombre),
+  //         transportista:transportistas(nombre, telefono)
+  //       ''')
+  //       .eq('cliente_id', userId as Object)
+  //       .order('fecha_solicitud', ascending: false);
 
-    return response as List<Map<String, dynamic>>;
-  }
+  //   return response as List<Map<String, dynamic>>;
+  // }
 
   Future<void> cancelarViaje(String viajeId) async {
     await _supabase.from('viajes').delete().match({'id': viajeId});
   }
 
-  Future<void> aceptarViaje(String viajeId, String transportistaId) async {
-    await Supabase.instance.client
-        .from('viajes')
-        .update({'transportista_id': transportistaId, 'estado': 'ACEPTADO'})
-        .match({'id': viajeId});
+  // Future<void> aceptarViaje(String viajeId, String transportistaId) async {
+  //   await Supabase.instance.client
+  //       .from('viajes')
+  //       .update({'transportista_id': transportistaId, 'estado': 'ACEPTADO'})
+  //       .match({'id': viajeId});
 
-    AppService.showAlert("Viaje asignado correctamente");
-  }
+  //   AppService.showAlert("Viaje asignado correctamente");
+  // }
 
   // En lib/services/viajes_service.dart
 
@@ -147,14 +215,7 @@ class ViajesService {
   }
 
   Future<void> asignarViajeAVehiculo(String viajeId, String vehiculoId) async {
-    final transportistaId =
-        Supabase
-            .instance
-            .client
-            .auth
-            .currentUser
-            ?.id; // ID del transportista logueado
-
+    final transportistaId = Supabase.instance.client.auth.currentUser?.id; //
     await Supabase.instance.client
         .from('viajes')
         .update({

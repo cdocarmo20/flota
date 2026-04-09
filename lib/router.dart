@@ -4,6 +4,7 @@ import 'package:demos/pages/cargas_disponibles_page.dart';
 import 'package:demos/pages/espera_page.dart';
 import 'package:demos/pages/flota_page.dart';
 import 'package:demos/pages/login/login_page.dart';
+import 'package:demos/pages/mis_cargas_page.dart';
 import 'package:demos/pages/mis_viajes_page.dart';
 import 'package:demos/pages/nuevo_transportista_page.dart';
 import 'package:demos/pages/placeholder_page.dart';
@@ -115,7 +116,7 @@ final appRouter = GoRouter(
         // 2. Ruta para que el Cliente vea el historial de sus pedidos
         GoRoute(
           path: '/mis-viajes',
-          builder: (context, state) => const MisViajesPage(),
+          builder: (context, state) => const MisCargasPage(),
         ),
 
         // 3. Ruta para que el Transportista vea cargas para aceptar

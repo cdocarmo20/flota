@@ -1,5 +1,6 @@
 import 'package:demos/services/auth_service.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'router.dart';
@@ -29,7 +30,21 @@ class MyApp extends StatelessWidget {
       builder: (_, mode, __) {
         return MaterialApp.router(
           debugShowCheckedModeBanner: false,
-          title: 'Admin Pro Web',
+          localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            GlobalCupertinoLocalizations.delegate,
+          ],
+
+          // 3. Definir idiomas soportados
+          supportedLocales: const [
+            Locale('es', 'ES'), // Español
+            Locale('en', 'US'), // Inglés (opcional)
+          ],
+
+          // 4. Forzar el idioma si es necesario
+          locale: const Locale('es', 'ES'),
+          title: 'Flota',
           themeMode: mode,
           theme: ThemeData(useMaterial3: true, colorSchemeSeed: Colors.indigo),
           darkTheme: ThemeData(
