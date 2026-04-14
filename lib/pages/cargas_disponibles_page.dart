@@ -1,8 +1,8 @@
-import 'package:demos/models/vehiculo.dart';
-import 'package:demos/services/auth_service.dart';
-import 'package:demos/services/db/localidades_service.dart';
-import 'package:demos/services/db/transportista_service.dart';
-import 'package:demos/services/db/viajes_service.dart';
+import 'package:cargasuy/models/vehiculo.dart';
+import 'package:cargasuy/services/auth_service.dart';
+import 'package:cargasuy/services/db/localidades_service.dart';
+import 'package:cargasuy/services/db/transportista_service.dart';
+import 'package:cargasuy/services/db/viajes_service.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/page_layout.dart';
@@ -447,6 +447,7 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
                     await _viajesService.aceptarYAsignarViaje(
                       viaje['id'],
                       vehiculoSeleccionadoId!,
+                      viaje['creador_id'],
                     );
                     setState(() {}); // Refresca lista
                     AppService.showAlert("Viaje aceptado. ¡Buen viaje!");

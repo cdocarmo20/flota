@@ -1,9 +1,9 @@
-import 'package:demos/models/usuario.dart';
-import 'package:demos/models/vehiculo.dart';
-import 'package:demos/services/app_state.dart';
-import 'package:demos/services/auth_service.dart';
-import 'package:demos/services/db/transportista_service.dart';
-import 'package:demos/services/db/vehiculo_service.dart';
+import 'package:cargasuy/models/usuario.dart';
+import 'package:cargasuy/models/vehiculo.dart';
+import 'package:cargasuy/services/app_state.dart';
+import 'package:cargasuy/services/auth_service.dart';
+import 'package:cargasuy/services/db/transportista_service.dart';
+import 'package:cargasuy/services/db/vehiculo_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';

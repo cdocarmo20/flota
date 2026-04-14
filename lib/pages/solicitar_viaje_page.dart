@@ -1,6 +1,6 @@
-import 'package:demos/services/auth_service.dart';
-import 'package:demos/services/db/localidades_service.dart';
-import 'package:demos/services/db/viajes_service.dart';
+import 'package:cargasuy/services/auth_service.dart';
+import 'package:cargasuy/services/db/localidades_service.dart';
+import 'package:cargasuy/services/db/viajes_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../widgets/page_layout.dart';
@@ -113,7 +113,7 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
           'destino_id': _destinoId,
           'descripcion': _descCtrl.text,
           'peso': double.tryParse(_pesoCtrl.text) ?? 0.0,
-          'precio': _precioSugerido,
+          'precio': double.tryParse(_tarifaController.text) ?? 0.0,
           'estado': 'PENDIENTE',
           'fecha_viaje': _fechaSeleccionada?.toIso8601String(),
         };
@@ -212,21 +212,21 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
                                 "Peso Estimado (Toneladas)",
                                 Icons.fitness_center,
                                 isNumber: true,
-                                onChanged:
-                                    (_) =>
-                                        _calcularPrecio(), // Recalcula al escribir
+                                // onChanged:
+                                //     (_) =>
+                                //         _calcularPrecio(), // Recalcula al escribir
                               ),
                             ),
                             const SizedBox(width: 20),
                             Expanded(
                               child: _buildInput(
                                 _tarifaController,
-                                "Tarifa por Tonelada (\$)",
+                                "Tarifa Carga (\$)",
                                 Icons.fitness_center,
                                 isNumber: true,
-                                onChanged:
-                                    (_) =>
-                                        _calcularPrecio(), // Recalcula al escribir
+                                // onChanged:
+                                //     (_) =>
+                                //         _calcularPrecio(), // Recalcula al escribir
                               ),
                             ),
                             const SizedBox(width: 120),

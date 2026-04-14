@@ -1,5 +1,5 @@
-import 'package:demos/models/usuario.dart';
-import 'package:demos/services/auth_service.dart';
+import 'package:cargasuy/models/usuario.dart';
+import 'package:cargasuy/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../services/app_state.dart';
@@ -36,7 +36,6 @@ class CustomSidebar extends StatelessWidget {
                             isSidebarExpanded.value = !isSidebarExpanded.value,
                   ),
                   const Divider(),
-
                   // 1. Ítem Simple
                   _navItem(context, Icons.dashboard, "Inicio", "/", isExpanded),
                   if (rol != UserRole.admin) ...[
@@ -69,7 +68,7 @@ class CustomSidebar extends StatelessWidget {
                       context,
                       Icons.airplane_ticket_outlined,
                       "Mis Cargas Aceptadas",
-                      "/mis-viajes",
+                      "/cargas-aceptadas",
                       isExpanded,
                     ),
 
@@ -132,6 +131,13 @@ class CustomSidebar extends StatelessWidget {
                       isExpanded,
                     ),
 
+                    _navItem(
+                      context,
+                      Icons.airplane_ticket_outlined,
+                      "Mis Cargas Aceptadas",
+                      "/cargas-aceptadas",
+                      isExpanded,
+                    ),
                     // 2. ÍTEM CON SUBMENÚ (Uso de ExpansionTile)
                     if (isExpanded)
                       Theme(

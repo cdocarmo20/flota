@@ -1,4 +1,4 @@
-import 'package:demos/models/vehiculo.dart';
+import 'package:cargasuy/models/vehiculo.dart';
 
 class Transportista {
   final String id;

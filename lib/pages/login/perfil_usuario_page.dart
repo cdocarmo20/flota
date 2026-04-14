@@ -1,7 +1,7 @@
-import 'package:demos/services/app_state.dart';
-import 'package:demos/services/db/localidades_service.dart';
-import 'package:demos/services/db/usuario_service.dart';
-import 'package:demos/widgets/page_layout.dart';
+import 'package:cargasuy/services/app_state.dart';
+import 'package:cargasuy/services/db/localidades_service.dart';
+import 'package:cargasuy/services/db/usuario_service.dart';
+import 'package:cargasuy/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -44,6 +44,11 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
 
   Future<void> _cargarDatosActuales() async {
     final user = Supabase.instance.client.auth.currentUser;
+    final nombre =
+        user?.userMetadata?['full_name'] ??
+        user?.userMetadata?['nombre'] ??
+        "Usuario";
+    print(nombre);
     final data =
         await Supabase.instance.client
             .from('clientes')

@@ -1,20 +1,21 @@
-import 'package:demos/models/usuario.dart';
-import 'package:demos/pages/admin_usuarios_page.dart';
-import 'package:demos/pages/cargas_disponibles_page.dart';
-import 'package:demos/pages/espera_page.dart';
-import 'package:demos/pages/flota_page.dart';
-import 'package:demos/pages/login/login_page.dart';
-import 'package:demos/pages/mis_cargas_page.dart';
-import 'package:demos/pages/mis_viajes_page.dart';
-import 'package:demos/pages/nuevo_transportista_page.dart';
-import 'package:demos/pages/placeholder_page.dart';
-import 'package:demos/pages/profile_page.dart';
-import 'package:demos/pages/solicitar_viaje_page.dart';
-import 'package:demos/pages/transportistas_page.dart';
-import 'package:demos/pages/login/perfil_usuario_page.dart';
-import 'package:demos/pages/login/register_page.dart';
-import 'package:demos/services/auth_service.dart';
-import 'package:demos/widgets/page_layout.dart';
+import 'package:cargasuy/models/usuario.dart';
+import 'package:cargasuy/pages/admin_usuarios_page.dart';
+import 'package:cargasuy/pages/cargas_disponibles_page.dart';
+import 'package:cargasuy/pages/detalle_viaje_page.dart';
+import 'package:cargasuy/pages/espera_page.dart';
+import 'package:cargasuy/pages/flota_page.dart';
+import 'package:cargasuy/pages/login/login_page.dart';
+import 'package:cargasuy/pages/mis_cargas_aceptadas.dart';
+import 'package:cargasuy/pages/mis_cargas_page.dart';
+import 'package:cargasuy/pages/nuevo_transportista_page.dart';
+import 'package:cargasuy/pages/placeholder_page.dart';
+import 'package:cargasuy/pages/profile_page.dart';
+import 'package:cargasuy/pages/solicitar_viaje_page.dart';
+import 'package:cargasuy/pages/transportistas_page.dart';
+import 'package:cargasuy/pages/login/perfil_usuario_page.dart';
+import 'package:cargasuy/pages/login/register_page.dart';
+import 'package:cargasuy/services/auth_service.dart';
+import 'package:cargasuy/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'wrapper.dart';
@@ -70,15 +71,17 @@ final appRouter = GoRouter(
       builder: (context, state, child) => MainWrapper(child: child),
       routes: [
         GoRoute(path: '/', builder: (context, state) => const DashboardPage()),
-        GoRoute(
-          path: '/clientes',
-          builder:
-              (context, state) => const PageLayout(
-                title: "Lista de Clientes ",
-                icon: Icons.people,
-                child: ClientesVIPPage(),
-              ),
-        ),
+
+        // Esto Es un listado de clientes que no va mas
+        // GoRoute(
+        //   path: '/clientes',
+        //   builder:
+        //       (context, state) => const PageLayout(
+        //         title: "Lista de Clientes ",
+        //         icon: Icons.people,
+        //         child: ClientesVIPPage(),
+        //       ),
+        // ),
         GoRoute(
           path: '/transportistas',
           builder:
@@ -125,6 +128,11 @@ final appRouter = GoRouter(
           builder: (context, state) => const CargasDisponiblesPage(),
         ),
         GoRoute(
+          path: '/cargas-aceptadas',
+          builder: (context, state) => const MisViajesAceptadosPage(),
+        ),
+
+        GoRoute(
           path: '/nuevo-transportista',
           builder: (context, state) => const NuevoTransportistaPage(),
         ),
@@ -136,6 +144,16 @@ final appRouter = GoRouter(
           path: '/mi-perfil',
           builder: (context, state) => const PerfilUsuarioPage(),
         ),
+
+        GoRoute(
+          path: '/detalle-viaje/:viajeId', // El ':' indica que es un parámetro
+          builder: (context, state) {
+            // Extraemos el ID de la URL
+            final viajeId = state.pathParameters['viajeId']!;
+            return DetalleViajePage(viajeId: viajeId);
+          },
+        ),
+
         GoRoute(
           path: '/profile',
           builder:

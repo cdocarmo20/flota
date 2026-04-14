@@ -1,5 +1,5 @@
-import 'package:demos/services/db/localidades_service.dart';
-import 'package:demos/services/db/usuario_service.dart';
+import 'package:cargasuy/services/db/localidades_service.dart';
+import 'package:cargasuy/services/db/usuario_service.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/page_layout.dart';
@@ -16,6 +16,40 @@ class _AdminUsuariosPageState extends State<AdminUsuariosPage>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final _supabase = Supabase.instance.client;
+
+  List<Map<String, dynamic>> usuariosEnLinea = [];
+
+  // void escucharUsuariosActivos() {
+  //     // Asegúrate de que el canal esté inicializado pero NO suscrito aún
+  //     AppService.presenceChannel!.on(
+  //       RealtimeListenTypes.presence,
+  //       ChannelFilter(event: 'sync'), // 'sync' es el evento para presencia
+  //       (payload, [ref]) {
+  //         // Obtenemos el estado actual
+  //         final state = AppService.presenceChannel!.presenceState();
+
+  //         // Convertimos a lista legible
+  //         final usuariosOnline =
+  //             state.values
+  //                 .expand((presence) => presence)
+  //                 .map((presence) => presence.payload as Map<String, dynamic>)
+  //                 .toList();
+
+  //         print('Usuarios conectados actualmente: ${usuariosOnline.length}');
+  //         // Aquí puedes actualizar un ValueNotifier o llamar a un setState
+  //       },
+  //     ).subscribe(); // EL SUBSCRIBE SIEMPRE AL FINAL
+  //   }
+
+  //   Widget _indicadorOnline(String userId) {
+  //     // Verificamos si el ID está en nuestra lista de usuariosEnLinea
+  //     bool estaActivo = usuariosEnLinea.any((u) => u['usuario_id'] == userId);
+
+  //     return CircleAvatar(
+  //       radius: 6,
+  //       backgroundColor: estaActivo ? Colors.green : Colors.grey,
+  //     );
+  //   }
 
   @override
   void initState() {
@@ -92,6 +126,8 @@ class _AdminUsuariosPageState extends State<AdminUsuariosPage>
 
   // --- 3. CONSTRUCTOR DE LA LISTA ---
   Widget _buildUserList({required String estado}) {
+    // bool estaActivo = usuariosEnLinea.any((u) => u['usuario_id'] == userId);
+
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: _supabase
           .from('clientes')

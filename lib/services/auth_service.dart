@@ -1,4 +1,4 @@
-import 'package:demos/models/usuario.dart';
+import 'package:cargasuy/models/usuario.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -12,6 +12,42 @@ final ValueNotifier<String?> userStatus = ValueNotifier(null);
 class AuthService {
   static const String _authKey = 'isLoggedIn';
   static const String _rememberKey = 'rememberMe';
+
+  //  String? _nombreUsuario = '';
+  //  String? get nombreUsuario => _nombreUsuario;
+
+  static Future<String?> obtenerNombreDeUsuario() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) return null;
+
+    final data =
+        await Supabase.instance.client
+            .from('clientes')
+            .select('nombre')
+            .eq('id', user.id)
+            .single();
+
+    return data['nombre'] as String?;
+  }
+
+  // static Future<void> cargarPerfil() async {
+  //   try {
+  //     final user = Supabase.instance.client.auth.currentUser;
+  //     if (user != null) {
+  //       final data =
+  //           await Supabase.instance.client
+  //               .from('clientes') // Asegúrate que sea la tabla correcta
+  //               .select()
+  //               .eq('id', user.id)
+  //               .single();
+
+  //       _nombreUsuario = data['nombre'];
+  //       // notifyListeners(); // Esto avisa a toda la app que ya tenemos el nombre
+  //     }
+  //   } catch (e) {
+  //     print("Error al cargar perfil en AppState: $e");
+  //   }
+  // }
 
   static Future<void> checkLoginStatus() async {
     final user = Supabase.instance.client.auth.currentUser;

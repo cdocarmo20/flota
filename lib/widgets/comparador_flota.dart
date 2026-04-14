@@ -1,5 +1,5 @@
-import 'package:demos/models/transportista.dart';
-import 'package:demos/services/logistica_service.dart';
+import 'package:cargasuy/models/transportista.dart';
+import 'package:cargasuy/services/logistica_service.dart';
 import 'package:flutter/material.dart';
 
 Widget buildComparador(Transportista t1, Transportista t2) {

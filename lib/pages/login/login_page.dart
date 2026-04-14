@@ -30,6 +30,7 @@ class _LoginPageState extends State<LoginPage> {
       bool success = await AuthService.login(email, pass);
 
       if (success) {
+        // await AppService.cargarUsuario();
         if (mounted) context.go('/'); // Redirige al Dashboard
       } else {
         AppService.showAlert("Email o contraseña incorrectos");
@@ -52,12 +53,20 @@ class _LoginPageState extends State<LoginPage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.lock_person_rounded,
-                size: 80,
-                color: Colors.indigo,
+              // const Icon(
+              //   Icons.lock_person_rounded,
+              //   size: 80,
+              //   color: Colors.indigo,
+              // ),
+              Hero(
+                tag: 'logo',
+                child: Image.asset(
+                  'assets/logo.png',
+                  height: 120, // Ajusta el tamaño según tu diseño
+                  fit: BoxFit.contain,
+                ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 10),
               const Text(
                 "Bienvenido",
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),

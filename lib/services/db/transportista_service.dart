@@ -1,5 +1,5 @@
-import 'package:demos/models/transportista.dart';
-import 'package:demos/models/vehiculo.dart';
+import 'package:cargasuy/models/transportista.dart';
+import 'package:cargasuy/models/vehiculo.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class TransportistaService {

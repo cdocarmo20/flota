@@ -1,6 +1,6 @@
 // En lib/services/logistica_service.dart o dentro de tu Dashboard
-import 'package:demos/models/transportista.dart';
-import 'package:demos/models/vehiculo.dart';
+import 'package:cargasuy/models/transportista.dart';
+import 'package:cargasuy/models/vehiculo.dart';
 
 class LogisticaService {
   static Map<String, double> calcularCapacidadPorTransportista(

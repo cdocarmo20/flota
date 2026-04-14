@@ -1,6 +1,6 @@
-import 'package:demos/services/app_state.dart';
-import 'package:demos/services/db/localidades_service.dart';
-import 'package:demos/widgets/animated_login_bg.dart';
+import 'package:cargasuy/services/app_state.dart';
+import 'package:cargasuy/services/db/localidades_service.dart';
+import 'package:cargasuy/widgets/animated_login_bg.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
