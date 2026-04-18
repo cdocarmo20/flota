@@ -8,7 +8,8 @@ class LocalidadService {
         .from('localidades')
         .select('id, nombre, latitud, longitud')
         .order('nombre', ascending: true);
-    return response as List<Map<String, dynamic>>;
+    // return response as List<Map<String, dynamic>>;
+    return List<Map<String, dynamic>>.from(response);
   }
 
   Future<Map<String, dynamic>> crearLocalidad(String nombre) async {

@@ -1,12 +1,15 @@
+import 'package:cargasuy/models/vehiculo.dart';
+import 'package:cargasuy/services/app_state.dart';
+import 'package:cargasuy/services/db/transportista_service.dart';
 import 'package:cargasuy/services/db/viajes_service.dart';
 import 'package:cargasuy/widgets/utilita_widgets.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_map/flutter_map.dart';
+// import 'package:flutter_map/flutter_map.dart';
 // import 'package:latlong2/latlong2.dart';
-import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart'; // 1. Importa esto
+// import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart'; // 1. Importa esto
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
-import 'package:latlong2/latlong.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 // import 'package:supabase_flutter/supabase_flutter.dart';
@@ -102,6 +105,29 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
     }
   }
 
+  void _ajustarCamara(GoogleMapController controller, dynamic viaje) {
+    LatLng origen = LatLng(viaje['origen_lat'], viaje['origen_lng']);
+    LatLng destino = LatLng(viaje['destino_lat'], viaje['destino_lng']);
+
+    LatLngBounds bounds = LatLngBounds(
+      southwest: LatLng(
+        origen.latitude < destino.latitude ? origen.latitude : destino.latitude,
+        origen.longitude < destino.longitude
+            ? origen.longitude
+            : destino.longitude,
+      ),
+      northeast: LatLng(
+        origen.latitude > destino.latitude ? origen.latitude : destino.latitude,
+        origen.longitude > destino.longitude
+            ? origen.longitude
+            : destino.longitude,
+      ),
+    );
+
+    // Le damos un "padding" de 50 para que los pines no queden pegados al borde
+    controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_loading)
@@ -133,43 +159,47 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
         child: Column(
           children: [
             // 1. MAPA INTERACTIVO
-            SizedBox(
-              height: 250,
-              child: FlutterMap(
-                options: MapOptions(
-                  initialCenter: LatLng(latOri, lonOri),
-                  initialZoom: 7,
+            ClipRRect(
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(20),
+              ),
+              child: SizedBox(
+                height: 250, // Altura del mapa
+                width: double.infinity,
+                child: GoogleMap(
+                  initialCameraPosition: CameraPosition(
+                    target: LatLng(v['origen_lat'], v['origen_lng']),
+                    zoom: 12,
+                  ),
+                  // Deshabilitamos el movimiento para que no moleste al hacer scroll en la página
+                  scrollGesturesEnabled: false,
+                  zoomGesturesEnabled: true,
+                  markers: {
+                    Marker(
+                      markerId: const MarkerId('origen'),
+                      position: LatLng(v['origen_lat'], v['origen_lng']),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueGreen,
+                      ),
+                      infoWindow: const InfoWindow(title: "Origen"),
+                    ),
+                    Marker(
+                      markerId: const MarkerId('destino'),
+                      position: LatLng(v['destino_lat'], v['destino_lng']),
+                      icon: BitmapDescriptor.defaultMarkerWithHue(
+                        BitmapDescriptor.hueRed,
+                      ),
+                      infoWindow: const InfoWindow(title: "Destino"),
+                    ),
+                  },
+                  onMapCreated: (controller) {
+                    // Ajustamos la cámara para que se vean AMBOS puntos automáticamente
+                    _ajustarCamara(controller, v);
+                  },
                 ),
-                children: [
-                  TileLayer(
-                    urlTemplate: 'https://openstreetmap.org{z}/{x}/{y}.png',
-                    // 2. Agrega esta línea para mejorar el rendimiento:
-                    tileProvider: CancellableNetworkTileProvider(),
-                  ),
-                  MarkerLayer(
-                    markers: [
-                      Marker(
-                        point: LatLng(latOri, lonOri),
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.blue,
-                          size: 40,
-                        ),
-                      ),
-                      Marker(
-                        point: LatLng(latDes, lonDes),
-                        child: const Icon(
-                          Icons.location_on,
-                          color: Colors.red,
-                          size: 40,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
               ),
             ),
-
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -198,38 +228,123 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
                     Colors.blue,
                     "Origen",
                     v['origen']['nombre'],
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v['origen']['nombre'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          v['origen_direccion'] ?? "Dirección no especificada",
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ],
+                    ),
                   ),
                   _buildInfoTile(
                     Icons.location_on,
                     Colors.red,
                     "Destino",
                     v['destino']['nombre'],
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          v['destino']['nombre'],
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
+                        Text(
+                          v['destino_direccion'] ?? "Dirección no especificada",
+                          style: TextStyle(color: Colors.white, fontSize: 14),
+                        ),
+                      ],
+                    ),
                   ),
 
                   const SizedBox(height: 20),
 
-                  // 4. VEHÍCULO
-                  _buildSectionTitle("Vehículo"),
-                  Card(
-                    child: ListTile(
-                      leading: const Icon(
-                        Icons.local_shipping,
-                        color: Colors.blueGrey,
+                  if (v!['estado'] != 'PENDIENTE' &&
+                      v!['transportista'] != null) ...[
+                    _buildSectionTitle("Transportista Asignado"),
+                    Card(
+                      child: ListTile(
+                        leading: const CircleAvatar(child: Icon(Icons.person)),
+                        title: Text(
+                          v!['transportista']['nombre'] ?? "Sin nombre",
+                        ),
+                        subtitle: Text(
+                          "Tel: ${v!['transportista']['telefono'] ?? "N/A"}",
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.phone, color: Colors.green),
+                          onPressed: () {},
+                          // => launchUrl(
+                          //   Uri.parse(
+                          //     "tel:${v!['transportista']['telefono']}",
+                          //   ),
+                          // ),
+                        ),
                       ),
-                      title: Text("${v['vehiculo']['modelo']}"),
-                      subtitle: Text("Patente: ${v['vehiculo']['patente']}"),
                     ),
-                  ),
+                  ] else if (v!['estado'] == 'PENDIENTE') ...[
+                    // Mensaje amigable si aún no hay nadie
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 20),
+                      child: Center(
+                        child: Text(
+                          "⏳ Buscando el mejor transportista disponible...",
+                          style: TextStyle(
+                            fontStyle: FontStyle.italic,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+
+                  if (v!['vehiculo'] != null) ...[
+                    _buildSectionTitle("Vehículo"),
+                    Card(
+                      child: ListTile(
+                        leading: const Icon(Icons.local_shipping),
+                        title: Text(
+                          "${v!['vehiculo']['marca'] ?? ''} ${v!['vehiculo']['modelo'] ?? ''}",
+                        ),
+                        subtitle: Text(
+                          "Matrícula: ${v!['vehiculo']['patente'] ?? 'S/D'}",
+                        ),
+                      ),
+                    ),
+                  ],
+                  // 4. VEHÍCULO
+                  // _buildSectionTitle("Vehículo"),
+                  // Card(
+                  //   child: ListTile(
+                  //     leading: const Icon(
+                  //       Icons.local_shipping,
+                  //       color: Colors.blueGrey,
+                  //     ),
+                  //     title: Text("${v['vehiculo']['modelo']}"),
+                  //     subtitle: Text("Patente: ${v['vehiculo']['patente']}"),
+                  //   ),
+                  // ),
 
                   // 5. CARGA Y CLIENTE
                   _buildSectionTitle("Información de Carga"),
                   _buildDetailRow("Descripción", v['descripcion_carga']),
                   _buildDetailRow("Peso", "${v['peso_estimado']} kg"),
-                  _buildDetailRow(
-                    "Transportista",
-                    v['transportista']['nombre'],
-                  ),
 
+                  // _buildDetailRow(
+                  //   "Transportista",
+                  //   v['transportista']['nombre'],
+                  // ),
                   const SizedBox(height: 30),
                   if (v['resenia'] != null && v['resenia'].isNotEmpty) ...[
                     const SizedBox(height: 20),
@@ -281,6 +396,27 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
                       ),
                     ),
                   ],
+                  if (v['estado'] == 'PENDIENTE' && !soyElClienteDeEsteViaje)
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          minimumSize: const Size(double.infinity, 50),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        onPressed: () => _abrirModalAceptarCarga(context, v),
+                        child: const Text(
+                          "ACEPTAR ESTE VIAJE",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
                   const SizedBox(height: 30),
                   if (v['estado'] == 'ACEPTADO' &&
                       soyElTransportistaDeEsteViaje)
@@ -337,6 +473,135 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
         ),
       ),
     );
+  }
+
+  void _abrirModalAceptarCarga(
+    BuildContext context,
+    Map<String, dynamic> viaje,
+  ) {
+    String? vehiculoSeleccionadoId;
+    print(viaje);
+    final cliente = viaje['creador'];
+
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Aceptar y Asignar Unidad"),
+            content: SizedBox(
+              width: 450,
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // SECCIÓN 1: CONTACTO DEL CLIENTE
+                    const Text(
+                      "DATOS DEL CLIENTE",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const CircleAvatar(child: Icon(Icons.person)),
+                      title: Text(cliente['nombre'] ?? 'Sin nombre'),
+                      subtitle: Text(
+                        "Tel: ${cliente['celular'] ?? 'No registrado'}",
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.phone, color: Colors.green),
+                        onPressed: () => _contactarCliente(cliente['celular']),
+                      ),
+                    ),
+                    const Divider(),
+
+                    // SECCIÓN 2: SELECCIÓN DE VEHÍCULO
+                    const SizedBox(height: 10),
+                    const Text(
+                      "ASIGNAR VEHÍCULO",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                        color: Colors.grey,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    FutureBuilder<List<Vehiculo>>(
+                      future: TransportistaService().fetchMisVehiculos(),
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData)
+                          return const LinearProgressIndicator();
+                        if (snapshot.data!.isEmpty)
+                          return const Text("⚠️ No tienes vehículos cargados.");
+
+                        return DropdownButtonFormField<String>(
+                          decoration: const InputDecoration(
+                            border: OutlineInputBorder(),
+                            labelText: "Elegir Camión",
+                          ),
+                          items:
+                              snapshot.data!
+                                  .map(
+                                    (v) => DropdownMenuItem(
+                                      value: v.id,
+                                      child: Text("${v.patente} - ${v.modelo}"),
+                                    ),
+                                  )
+                                  .toList(),
+                          onChanged: (val) => vehiculoSeleccionadoId = val,
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CANCELAR"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () async {
+                  if (vehiculoSeleccionadoId == null) {
+                    AppService.showAlert("Debes seleccionar un vehículo");
+                    return;
+                  }
+
+                  Navigator.pop(context); // Cierra modal
+                  AppService.runWithLoading(() async {
+                    await _viajesService.aceptarYAsignarViaje(
+                      viaje['id'],
+                      vehiculoSeleccionadoId!,
+                      viaje['creador_id'],
+                    );
+                    // setState(() {}); // Refresca lista
+                    AppService.showAlert("Viaje aceptado. ¡Buen viaje!");
+                    _cargarDatos();
+                  });
+                },
+                child: const Text("CONFIRMAR Y ACEPTAR"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  void _contactarCliente(String? celular) {
+    if (celular == null) {
+      AppService.showAlert("El cliente no registró celular");
+      return;
+    }
+    // Aquí podrías usar url_launcher para abrir WhatsApp directamente
+    AppService.showAlert("Llamando al cliente: $celular");
   }
 
   void _mostrarDialogoResenia() {
@@ -439,6 +704,7 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
     Color color,
     String label,
     String value,
+    Widget content,
   ) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
@@ -447,10 +713,11 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
         label,
         style: const TextStyle(fontSize: 12, color: Colors.grey),
       ),
-      subtitle: Text(
-        value,
-        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-      ),
+      subtitle: content,
+      // subtitle: Text(
+      //   value,
+      //   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+      // ),
     );
   }
 

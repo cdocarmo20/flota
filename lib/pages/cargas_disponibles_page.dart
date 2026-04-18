@@ -4,6 +4,7 @@ import 'package:cargasuy/services/db/localidades_service.dart';
 import 'package:cargasuy/services/db/transportista_service.dart';
 import 'package:cargasuy/services/db/viajes_service.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../widgets/page_layout.dart';
 import '../services/app_state.dart';
@@ -330,14 +331,186 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
                   itemCount: snapshot.data!.length,
                   itemBuilder: (context, index) {
                     final viaje = snapshot.data![index];
-
-                    return _buildViajeCard(viaje);
+                    return _buildCargaCard(viaje);
+                    // return _buildViajeCard(viaje);
                   },
                 );
               },
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCargaCard(Map<String, dynamic> carga) {
+    final bool soyElCreador = carga['creador_id'] == _miId;
+    return Card(
+      elevation: 3,
+      margin: const EdgeInsets.only(bottom: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      child: InkWell(
+        onTap: () => context.push('/detalle-viaje/${carga['id']}'),
+        borderRadius: BorderRadius.circular(15),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // CABECERA: Precio y Categoría
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.deepOrangeAccent.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      "💰 \$${carga['precio_ofertado']}",
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.deepOrangeAccent,
+                      ),
+                    ),
+                  ),
+                  _buildBadge(carga['tipo_carga'] ?? 'General'),
+                ],
+              ),
+              const SizedBox(height: 15),
+
+              // CUERPO: Ruta (Origen -> Destino)
+              Row(
+                children: [
+                  const Icon(Icons.location_on, color: Colors.blue, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "${carga['origen']['nombre']} ➔ ${carga['destino']['nombre']}",
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 14,
+                    child: Icon(Icons.person, size: 16),
+                  ),
+                  const SizedBox(width: 10),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        carga['creador']['nombre'] ?? 'Usuario',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+                      Text(
+                        carga['creador']['mail'],
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Spacer(),
+                  // Botón de contacto rápido
+                  IconButton(
+                    icon: const Icon(Icons.sms, color: Colors.green),
+                    onPressed:
+                        () => _contactarCliente(carga['creador']['celular']),
+                  ),
+                ],
+              ),
+              // DETALLES: Peso y Fecha
+              const SizedBox(height: 10),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildSmallInfo(
+                    Icons.monitor_weight_outlined,
+                    "${carga['peso_estimado']} Ton.",
+                  ),
+                  _buildSmallInfo(
+                    Icons.calendar_today_outlined,
+                    carga['fecha_viaje'] ?? 'A convenir',
+                  ),
+                ],
+              ),
+
+              const Divider(height: 25),
+
+              // PIE: Descripción corta
+              Text(
+                carga['descripcion_carga'] ?? "Sin descripción adicional",
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
+              ),
+              const SizedBox(height: 15),
+              if (carga['estado'] == 'PENDIENTE' && !soyElCreador)
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _abrirModalAceptarCarga(context, carga),
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: const Text("ACEPTAR ESTA CARGA"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.indigo,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                )
+              else if (soyElCreador)
+                const Chip(
+                  label: Text("TU PUBLICACIÓN"),
+                  backgroundColor: Colors.grey,
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSmallInfo(IconData icon, String label) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: Colors.grey),
+        const SizedBox(width: 5),
+        Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+      ],
+    );
+  }
+
+  Widget _buildBadge(String texto) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: Colors.grey.shade200, // Color de fondo suave
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade400, width: 0.5),
+      ),
+      child: Text(
+        texto.toUpperCase(),
+        style: TextStyle(
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+          color: Colors.grey.shade700,
+        ),
       ),
     );
   }

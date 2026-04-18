@@ -91,7 +91,7 @@ class ViajesService {
               .from('viajes')
               .select('''
           *,
-         
+          creador:clientes!creador_id(nombre, telefono),
           origen:origen_id(nombre, latitud, longitud),
           destino:destino_id(nombre, latitud, longitud),
           transportista:transportista_id(nombre, telefono),
@@ -114,6 +114,12 @@ class ViajesService {
       'creador_id': userId, // Puede ser un cliente o un transportista
       'origen_id': datos['origen_id'],
       'destino_id': datos['destino_id'],
+      'origen_direccion': datos['origen_direccion'],
+      'origen_lat': datos['origen_lat'],
+      'origen_lng': datos['origen_lng'],
+      'destino_direccion': datos['destino_direccion'],
+      'destino_lat': datos['destino_lat'],
+      'destino_lng': datos['destino_lng'],
       'descripcion_carga': datos['descripcion'],
       'peso_estimado': datos['peso'],
       'precio_ofertado': datos['precio'],

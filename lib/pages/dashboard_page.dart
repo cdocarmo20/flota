@@ -97,7 +97,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             _stats['pendientes'].toString(),
                             Icons.timer_outlined,
                             Colors.orange,
-                            () => context.push('/mis-cargas'),
+                            () => context.push('/mis-viajes'),
                           ),
                           _buildStatCard(
                             "En Curso",

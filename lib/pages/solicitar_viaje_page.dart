@@ -1,9 +1,14 @@
+import 'package:cargasuy/pages/mapa_seleccion_page.dart';
 import 'package:cargasuy/services/auth_service.dart';
 import 'package:cargasuy/services/db/localidades_service.dart';
 import 'package:cargasuy/services/db/viajes_service.dart';
+import 'package:cargasuy/services/geocoding_web_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:http/http.dart' as http;
 import '../widgets/page_layout.dart';
+import 'dart:convert';
 
 import '../services/app_state.dart';
 
@@ -16,8 +21,6 @@ class SolicitarViajePage extends StatefulWidget {
 
 class _SolicitarViajePageState extends State<SolicitarViajePage> {
   final _formKey = GlobalKey<FormState>();
-  String? _origenId;
-  String? _destinoId;
   final _descCtrl = TextEditingController();
   final _pesoCtrl = TextEditingController();
   double _precioSugerido = 0.0;
@@ -25,20 +28,22 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
   DateTime? _fechaSeleccionada;
   final TextEditingController _fechaController = TextEditingController();
   final TextEditingController _tarifaController = TextEditingController();
-  List<Map<String, dynamic>> _localidades = [];
-  bool _isLoadingLoc = true;
+  Map<String, LatLng> _coordenadasCiudades = {}; // Para centrar el mapa luego
+  List<String> _listaNombresCiudades = [];
+  String? _locOrigen; // Guarda el nombre de la ciudad (ej: "Salto")
+  String? _dirOrigen; // Guarda la calle y número (ej: "Calle Uruguay 123")
+  LatLng? _latLngOrigen; // Guarda las coordenadas exactas para el mapa
+  bool _cargandoLocalidades = true;
+  // Variables para el DESTINO
+  String? _locDestino;
+  String? _dirDestino;
+  LatLng? _latLngDestino;
+  Map<String, String> _mapaIdsCiudades = {}; // Suponiendo que el ID es un int
 
   @override
   void initState() {
     super.initState();
-    _cargarLocalidades().then((_) {
-      // Si el usuario tiene una localidad guardada, la ponemos como origen por defecto
-      if (userLocalidad.value != null) {
-        setState(() {
-          _origenId = userLocalidad.value!['id'].toString();
-        });
-      }
-    });
+    _cargarLocalidades();
   }
 
   Future<void> _seleccionarFecha(BuildContext context) async {
@@ -58,7 +63,6 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
     if (picked != null && picked != _fechaSeleccionada) {
       setState(() {
         _fechaSeleccionada = picked;
-        // Formateamos la fecha para mostrarla en el campo de texto
         _fechaController.text = "${picked.day}/${picked.month}/${picked.year}";
       });
     }
@@ -80,53 +84,170 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
 
   Future<void> _cargarLocalidades() async {
     try {
-      final datos = await LocalidadService().fetchLocalidades();
+      final localidades = await LocalidadService().fetchLocalidades();
+      String? ciudadDelUsuario = userLocalidad.value!['nombre'].toString();
       setState(() {
-        _localidades = datos;
-        _isLoadingLoc = false;
+        _listaNombresCiudades =
+            localidades.map((l) => l['nombre'] as String).toList();
+        for (var l in localidades) {
+          _coordenadasCiudades[l['nombre']] = LatLng(
+            (l['latitud'] as num).toDouble(),
+            (l['longitud'] as num).toDouble(),
+          );
+          _mapaIdsCiudades[l['nombre']] = l['id'];
+        }
+        if (_listaNombresCiudades.contains(ciudadDelUsuario)) {
+          _locOrigen = ciudadDelUsuario;
+        }
+
+        _cargandoLocalidades = false;
       });
     } catch (e) {
+      print(e);
       AppService.showAlert("Error al cargar localidades");
-      setState(() => _isLoadingLoc = false);
+      setState(() => _cargandoLocalidades = false);
     }
   }
 
   void _enviarSolicitud() {
     if (!_formKey.currentState!.validate()) return;
-    if (_origenId == _destinoId) {
-      AppService.showAlert("Origen y Destino no pueden ser iguales");
+
+    if (_locOrigen == null ||
+        _latLngOrigen == null ||
+        _locDestino == null ||
+        _latLngDestino == null) {
+      AppService.showAlert(
+        "Por favor, seleccioná los puntos exactos en el mapa",
+      );
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(
+      //     content: Text("Por favor, seleccioná los puntos exactos en el mapa"),
+      //   ),
+      // );
       return;
     }
-    // final datosViaje = {
-    //   'origen_id': _origenId,
-    //   'destino_id': _destinoId,
-    //   'descripcion': _descCtrl.text,
-    //   'peso': double.parse(_pesoCtrl.text),
-    //   'precio': _precioSugerido, // Guardamos el precio calculado
-    //   'estado': 'PENDIENTE',
-    // };
+
+    final String? idOrigen = _mapaIdsCiudades[_locOrigen];
+    final String? idDestino = _mapaIdsCiudades[_locDestino];
 
     AppService.runWithLoading(() async {
       try {
         final datos = {
-          'origen_id': _origenId,
-          'destino_id': _destinoId,
+          'origen_id': idOrigen,
+          'origen_direccion': _dirOrigen,
+          'origen_lat': _latLngOrigen!.latitude,
+          'origen_lng': _latLngOrigen!.longitude,
+          'destino_id': idDestino,
+          'destino_direccion': _dirDestino,
+          'destino_lat': _latLngDestino!.latitude,
+          'destino_lng': _latLngDestino!.longitude,
           'descripcion': _descCtrl.text,
           'peso': double.tryParse(_pesoCtrl.text) ?? 0.0,
           'precio': double.tryParse(_tarifaController.text) ?? 0.0,
           'estado': 'PENDIENTE',
           'fecha_viaje': _fechaSeleccionada?.toIso8601String(),
         };
-
         await ViajesService().crearViaje(datos);
 
         AppService.showAlert("¡Viaje publicado con éxito!");
-        if (mounted)
+        if (mounted) {
           context.go('/mis-viajes'); // Redirige para que vea su lista
+        }
       } catch (e) {
+        print(e);
         AppService.showAlert("Error: No se pudo publicar el viaje");
       }
     });
+  }
+
+  void _abrirMapaPopup({required bool esOrigen}) async {
+    final ciudadActual = esOrigen ? _locOrigen : _locDestino;
+    final LatLng centro =
+        _coordenadasCiudades[ciudadActual] ?? const LatLng(-34.9011, -56.1645);
+
+    LatLng ubicacionTemporal = centro;
+    final LatLng? resultado = await showDialog<LatLng>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        // Usamos un contexto específico para el diálogo
+        return Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: SizedBox(
+            width: 500,
+            height: 500,
+            child: Column(
+              children: [
+                Expanded(
+                  child: Stack(
+                    children: [
+                      GoogleMap(
+                        initialCameraPosition: CameraPosition(
+                          target: centro,
+                          zoom: 15,
+                        ),
+                        onCameraMove: (pos) => ubicacionTemporal = pos.target,
+                        myLocationEnabled: true,
+                      ),
+                      // Pin fijo en el centro
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.only(bottom: 35),
+                          child: Icon(
+                            Icons.location_on,
+                            color: Colors.red,
+                            size: 45,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Botonera inferior
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.of(dialogContext).pop(),
+                        child: const Text("CANCELAR"),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          // USAMOS EL CONTEXTO DEL DIALOGO PARA CERRARLO
+                          // Navigator.of(dialogContext).pop(ubicacionTemporal);
+                          final posicionFinal = ubicacionTemporal;
+
+                          // Cerramos el diálogo pasando el valor
+                          Navigator.of(dialogContext).pop(posicionFinal);
+                        },
+                        child: const Text("CONFIRMAR"),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+
+    // 2. Al cerrar, procesamos la dirección si hubo resultado
+    if (resultado != null) {
+      final direccion = await GeocodingWebService.obtenerDireccion(resultado);
+      setState(() {
+        if (esOrigen) {
+          _latLngOrigen = resultado;
+          _dirOrigen = direccion;
+        } else {
+          _latLngDestino = resultado;
+          _dirDestino = direccion;
+        }
+      });
+    }
   }
 
   @override
@@ -137,7 +258,7 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
       child: Padding(
         padding: const EdgeInsets.all(10.0),
         child:
-            _isLoadingLoc
+            _cargandoLocalidades
                 ? const Center(child: CircularProgressIndicator())
                 : SingleChildScrollView(
                   // Previene el error de RenderFlex
@@ -176,16 +297,21 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
                           ),
                         ),
                         const SizedBox(height: 20),
-                        // DISEÑO RESPONSIVO DE RUTA
+
                         LayoutBuilder(
                           builder: (context, constraints) {
                             bool isMobile = constraints.maxWidth < 600;
                             return isMobile
-                                ? Column(children: _buildRouteFields())
-                                : Row(children: _buildRouteFields(isRow: true));
+                                ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: _buildRouteFields(),
+                                )
+                                : Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: _buildRouteFields(isRow: true),
+                                );
                           },
                         ),
-
                         const SizedBox(height: 30),
                         const Text(
                           "Detalles de la Carga",
@@ -203,6 +329,7 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
                           maxLines: 3,
                         ),
                         const SizedBox(height: 20),
+
                         Row(
                           children: [
                             const SizedBox(width: 200),
@@ -302,60 +429,134 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
   }
 
   List<Widget> _buildRouteFields({bool isRow = false}) {
-    final widgets = [
-      Expanded(
-        flex: isRow ? 1 : 0,
-        child: _buildDropdown(
-          "Origen",
-          _origenId,
-          (v) => setState(() => _origenId = v),
-        ),
-      ),
-      Padding(
-        padding: EdgeInsets.symmetric(horizontal: 10, vertical: isRow ? 0 : 10),
-        child: Icon(
-          isRow ? Icons.arrow_forward : Icons.arrow_downward,
-          color: Colors.indigo,
-        ),
-      ),
-      Expanded(
-        flex: isRow ? 1 : 0,
-        child: _buildDropdown(
-          "Destino",
-          _destinoId,
-          (v) => setState(() => _destinoId = v),
-        ),
-      ),
+    return [
+      // --- ORIGEN ---
+      isRow
+          ? Expanded(child: _buildSeccionOrigen()) // En Row necesita Expanded
+          : _buildSeccionOrigen(), // En Column no es obligatorio
+
+      if (isRow) const SizedBox(width: 20) else const SizedBox(height: 20),
+
+      // --- DESTINO ---
+      isRow
+          ? Expanded(child: _buildSeccionDestino()) // En Row necesita Expanded
+          : _buildSeccionDestino(),
     ];
-    // Si no es Row, quitamos el Expanded para evitar errores
-    return isRow
-        ? widgets
-        : widgets.map((w) => w is Expanded ? w.child : w).toList();
   }
 
-  Widget _buildDropdown(
-    String label,
-    String? value,
-    Function(String?) onChanged,
-  ) {
-    return DropdownButtonFormField<String>(
-      value: value,
-      decoration: InputDecoration(
-        labelText: label,
-        border: const OutlineInputBorder(),
-        prefixIcon: const Icon(Icons.location_on_outlined),
-      ),
-      items:
-          _localidades
-              .map(
-                (loc) => DropdownMenuItem(
-                  value: loc['id'].toString(),
-                  child: Text(loc['nombre']),
-                ),
-              )
-              .toList(),
-      onChanged: onChanged,
-      validator: (v) => v == null ? "Seleccione localidad" : null,
+  Widget _buildSeccionOrigen() {
+    return _seccionUbicacion(
+      esOrigen: true,
+      titulo: "Origen",
+      localidad: _locOrigen,
+      direccion: _dirOrigen,
+      onLocalidadChanged:
+          (val) => setState(() {
+            _locOrigen = val;
+            _dirOrigen = null;
+            _latLngOrigen = null;
+          }),
+      onMapaConfirmado:
+          (latLng, calle) => setState(() {
+            _latLngOrigen = latLng;
+            _dirOrigen = calle;
+          }),
+    );
+  }
+
+  Widget _buildSeccionDestino() {
+    return _seccionUbicacion(
+      esOrigen: false,
+      titulo: "Destino",
+      localidad: _locDestino,
+      direccion: _dirDestino,
+      onLocalidadChanged:
+          (val) => setState(() {
+            _locDestino = val;
+            _dirDestino = null;
+            _latLngDestino = null;
+          }),
+      onMapaConfirmado:
+          (latLng, calle) => setState(() {
+            _latLngDestino = latLng;
+            _dirDestino = calle;
+          }),
+    );
+  }
+
+  Widget _seccionUbicacion({
+    required bool esOrigen,
+    required String titulo,
+    required String? localidad,
+    required String? direccion,
+    required Function(String?) onLocalidadChanged,
+    required Function(LatLng, String) onMapaConfirmado,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min, // Ocupa solo el espacio necesario
+      crossAxisAlignment: CrossAxisAlignment.start, //
+      children: [
+        Text(titulo, style: TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+
+        // 1. Selector de Localidad (Simple)
+        DropdownButtonFormField<String>(
+          value: (_listaNombresCiudades.contains(localidad)) ? localidad : null,
+
+          isExpanded: true,
+          decoration: InputDecoration(
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            hintText: "Elegí la ciudad",
+          ),
+          // Aquí usas tu lista simple de ciudades desde Supabase
+          items:
+              _listaNombresCiudades
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+          onChanged: onLocalidadChanged,
+        ),
+
+        const SizedBox(height: 10),
+
+        // 2. Selector de Punto Exacto (Solo si hay ciudad)
+        if (localidad != null)
+          InkWell(
+            onTap: () async {
+              _abrirMapaPopup(esOrigen: esOrigen);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: direccion == null ? Colors.grey : Colors.red,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      direccion ?? "Marcá el punto exacto en el mapa",
+                      style: TextStyle(
+                        color: direccion == null ? Colors.white : Colors.white,
+                        fontSize: 14,
+                        fontWeight:
+                            direccion == null
+                                ? FontWeight.normal
+                                : FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.map_outlined, size: 20),
+                ],
+              ),
+            ),
+          ),
+      ],
     );
   }
 

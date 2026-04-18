@@ -3,6 +3,7 @@ import 'package:cargasuy/services/app_state.dart';
 import 'package:cargasuy/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import '../services/db/viajes_service.dart';
 import 'package:url_launcher/url_launcher.dart'; // Para llamar al cliente
 
@@ -118,6 +119,117 @@ class _MisCargasPageState extends State<MisCargasPage>
     );
   }
 
+  Widget _buildPuntoInfo({
+    required String label,
+    required String ciudad,
+    String? direccion,
+    required Color color,
+  }) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.location_on, color: color, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                  color: Colors.grey,
+                ),
+              ),
+              Text(
+                "$ciudad - ${direccion ?? 'Sin dirección exacta'}",
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _abrirEnGPSExterno(double lat, double lng) async {
+    final url = Uri.parse(
+      "https://www.google.com/maps/search/$lat,$lng?sa=X&ved=2ahUKEwjo6Y3U_PWCAxVGrJUCHW_2DmQQ8gF6BAgKEAA",
+    );
+    // Usar el paquete url_launcher para abrir la web
+    if (await canLaunchUrl(url)) {
+      await launchUrl(url);
+    }
+  }
+
+  void _verMapaStatic(LatLng origen, LatLng destino) {
+    showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            contentPadding: EdgeInsets.zero,
+            content: SizedBox(
+              width: 600,
+              height: 400,
+              child: GoogleMap(
+                initialCameraPosition: CameraPosition(target: origen, zoom: 12),
+                markers: {
+                  Marker(
+                    markerId: const MarkerId('origen'),
+                    position: origen,
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueGreen,
+                    ),
+                  ),
+                  Marker(
+                    markerId: const MarkerId('destino'),
+                    position: destino,
+                    icon: BitmapDescriptor.defaultMarkerWithHue(
+                      BitmapDescriptor.hueRed,
+                    ),
+                  ),
+                },
+                onMapCreated: (controller) {
+                  // Ajustar la cámara para que se vean ambos puntos
+                  LatLngBounds bounds = LatLngBounds(
+                    southwest: LatLng(
+                      origen.latitude < destino.latitude
+                          ? origen.latitude
+                          : destino.latitude,
+                      origen.longitude < destino.longitude
+                          ? origen.longitude
+                          : destino.longitude,
+                    ),
+                    northeast: LatLng(
+                      origen.latitude > destino.latitude
+                          ? origen.latitude
+                          : destino.latitude,
+                      origen.longitude > destino.longitude
+                          ? origen.longitude
+                          : destino.longitude,
+                    ),
+                  );
+                  controller.animateCamera(
+                    CameraUpdate.newLatLngBounds(bounds, 50),
+                  );
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CERRAR"),
+              ),
+            ],
+          ),
+    );
+  }
+
   Widget _buildCargaCard(Map<String, dynamic> carga, bool esHistorial) {
     final String estado =
         (carga['estado'] ?? 'PENDIENTE').toString().toUpperCase();
@@ -155,6 +267,7 @@ class _MisCargasPageState extends State<MisCargasPage>
           "Fecha Viaje: ${carga['fecha_viaje'] ?? 'A convenir'}",
           style: TextStyle(color: esHistorial ? Colors.grey : null),
         ),
+
         // Pasamos el color al badge para que haga juego
         trailing: _buildBadge(estado, esHistorial),
         children: [
@@ -163,6 +276,46 @@ class _MisCargasPageState extends State<MisCargasPage>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                _buildPuntoInfo(
+                  label: "Origen:",
+                  ciudad: carga['origen']['nombre'],
+                  direccion: carga['origen_direccion'],
+                  color: Colors.green,
+                ),
+                const SizedBox(height: 10),
+                _buildPuntoInfo(
+                  label: "Destino:",
+                  ciudad: carga['destino']['nombre'],
+                  direccion: carga['destino_direccion'],
+                  color: Colors.red,
+                ),
+                const Divider(),
+                // Botón para abrir el mapa
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    TextButton.icon(
+                      onPressed:
+                          () => _verMapaStatic(
+                            LatLng(carga['origen_lat'], carga['origen_lng']),
+                            LatLng(carga['destino_lat'], carga['destino_lng']),
+                          ),
+                      icon: const Icon(Icons.map),
+                      label: const Text("VER MAPA"),
+                    ),
+                    // Extra: Botón para abrir GPS externo (Google Maps app)
+                    TextButton.icon(
+                      onPressed:
+                          () => _abrirEnGPSExterno(
+                            carga['origen_lat'],
+                            carga['origen_lng'],
+                          ),
+                      icon: const Icon(Icons.navigation_outlined),
+                      label: const Text("IR AL ORIGEN"),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
                 Text(
                   "📝 Descripción: ${carga['descripcion_carga'] ?? 'Sin descripción'}",
                 ),
