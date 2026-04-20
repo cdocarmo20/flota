@@ -8,7 +8,9 @@ import 'package:flutter/material.dart';
 // import 'package:latlong2/latlong2.dart';
 // import 'package:flutter_map_cancellable_tile_provider/flutter_map_cancellable_tile_provider.dart'; // 1. Importa esto
 import 'package:go_router/go_router.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:google_maps_flutter_web/google_maps_flutter_web.dart';
 
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -105,18 +107,24 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
     }
   }
 
-  void _ajustarCamara(GoogleMapController controller, dynamic viaje) {
-    LatLng origen = LatLng(viaje['origen_lat'], viaje['origen_lng']);
-    LatLng destino = LatLng(viaje['destino_lat'], viaje['destino_lng']);
+  void _ajustarCamara(gmaps.GoogleMapController controller, dynamic viaje) {
+    gmaps.LatLng origen = gmaps.LatLng(
+      viaje['origen_lat'],
+      viaje['origen_lng'],
+    );
+    gmaps.LatLng destino = gmaps.LatLng(
+      viaje['destino_lat'],
+      viaje['destino_lng'],
+    );
 
-    LatLngBounds bounds = LatLngBounds(
-      southwest: LatLng(
+    gmaps.LatLngBounds bounds = gmaps.LatLngBounds(
+      southwest: gmaps.LatLng(
         origen.latitude < destino.latitude ? origen.latitude : destino.latitude,
         origen.longitude < destino.longitude
             ? origen.longitude
             : destino.longitude,
       ),
-      northeast: LatLng(
+      northeast: gmaps.LatLng(
         origen.latitude > destino.latitude ? origen.latitude : destino.latitude,
         origen.longitude > destino.longitude
             ? origen.longitude
@@ -125,7 +133,7 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
     );
 
     // Le damos un "padding" de 50 para que los pines no queden pegados al borde
-    controller.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
+    controller.animateCamera(gmaps.CameraUpdate.newLatLngBounds(bounds, 50));
   }
 
   @override
@@ -166,30 +174,33 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
               child: SizedBox(
                 height: 250, // Altura del mapa
                 width: double.infinity,
-                child: GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: LatLng(v['origen_lat'], v['origen_lng']),
+                child: gmaps.GoogleMap(
+                  initialCameraPosition: gmaps.CameraPosition(
+                    target: gmaps.LatLng(v['origen_lat'], v['origen_lng']),
                     zoom: 12,
                   ),
                   // Deshabilitamos el movimiento para que no moleste al hacer scroll en la página
                   scrollGesturesEnabled: false,
                   zoomGesturesEnabled: true,
                   markers: {
-                    Marker(
-                      markerId: const MarkerId('origen'),
-                      position: LatLng(v['origen_lat'], v['origen_lng']),
-                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                        BitmapDescriptor.hueGreen,
+                    gmaps.Marker(
+                      markerId: const gmaps.MarkerId('origen'),
+                      position: gmaps.LatLng(v['origen_lat'], v['origen_lng']),
+                      icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(
+                        gmaps.BitmapDescriptor.hueGreen,
                       ),
-                      infoWindow: const InfoWindow(title: "Origen"),
+                      infoWindow: const gmaps.InfoWindow(title: "Origen"),
                     ),
-                    Marker(
-                      markerId: const MarkerId('destino'),
-                      position: LatLng(v['destino_lat'], v['destino_lng']),
-                      icon: BitmapDescriptor.defaultMarkerWithHue(
-                        BitmapDescriptor.hueRed,
+                    gmaps.Marker(
+                      markerId: const gmaps.MarkerId('destino'),
+                      position: gmaps.LatLng(
+                        v['destino_lat'],
+                        v['destino_lng'],
                       ),
-                      infoWindow: const InfoWindow(title: "Destino"),
+                      icon: gmaps.BitmapDescriptor.defaultMarkerWithHue(
+                        gmaps.BitmapDescriptor.hueRed,
+                      ),
+                      infoWindow: const gmaps.InfoWindow(title: "Destino"),
                     ),
                   },
                   onMapCreated: (controller) {

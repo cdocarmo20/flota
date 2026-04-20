@@ -53,7 +53,7 @@ class _MisViajesTransportistaPageState extends State<MisViajesAceptadosPage>
     return DefaultTabController(
       length: 2,
       child: PageLayout(
-        icon: Icons.alternate_email,
+        icon: Icons.airplane_ticket_outlined,
         title: 'Mis Cargas Aceptadas',
         child: Column(
           children: [

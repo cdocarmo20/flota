@@ -194,7 +194,7 @@ class _DashboardPageState extends State<DashboardPage> {
           ),
           if (tieneCargas)
             ElevatedButton(
-              onPressed: () => context.push('/buscar-cargas'),
+              onPressed: () => context.push('/cargas-disponibles'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.white,
                 foregroundColor: Colors.orange,

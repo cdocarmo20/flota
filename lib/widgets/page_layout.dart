@@ -39,24 +39,26 @@ class PageLayout extends StatelessWidget {
                   child: Icon(icon, color: colorScheme.primary, size: 28),
                 ),
                 const SizedBox(width: 20),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                    ),
-                    Text(
-                      "Gestión y administración de $title",
-                      style: TextStyle(
-                        color: colorScheme.outline,
-                        fontSize: 14,
+                      Text(
+                        "Gestión y administración de $title",
+                        style: TextStyle(
+                          color: colorScheme.outline,
+                          fontSize: 14,
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 const Spacer(),
               ],

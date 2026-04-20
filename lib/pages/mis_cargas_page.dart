@@ -33,7 +33,7 @@ class _MisCargasPageState extends State<MisCargasPage>
     return DefaultTabController(
       length: 2,
       child: PageLayout(
-        icon: Icons.alternate_email,
+        icon: Icons.reorder,
         title: 'Mis Cargas Publicadas',
 
         child: Column(

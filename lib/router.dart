@@ -20,7 +20,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'wrapper.dart';
 import 'pages/dashboard_page.dart';
-import 'pages/clientes_page.dart';
+// import 'pages/clientes_page.dart';
 
 final appRouter = GoRouter(
   initialLocation: '/',

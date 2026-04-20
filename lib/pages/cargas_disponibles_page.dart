@@ -115,6 +115,106 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
     );
   }
 
+  // Widget _buildFiltrosAvanzados() {
+  //   return Card(
+  //     margin: const EdgeInsets.all(10),
+  //     child: Padding(
+  //       padding: const EdgeInsets.all(15),
+  //       child: Column(
+  //         children: [
+  //           _buildFiltros(),
+
+  //           const SizedBox(height: 10),
+  //           // FILTRO DE RADIO (Slider)
+  //           Row(
+  //             children: [
+  //               SizedBox(
+  //                 width: 160,
+  //                 child: TextFormField(
+  //                   keyboardType: TextInputType.number,
+  //                   decoration: const InputDecoration(
+  //                     labelText: "Peso Máx (Ton)",
+  //                     prefixIcon: Icon(Icons.scale),
+  //                     border: OutlineInputBorder(),
+  //                   ),
+  //                   onChanged: (val) {
+  //                     setState(() => _filtroPeso = double.tryParse(val));
+  //                   },
+  //                 ),
+  //               ),
+  //               const SizedBox(width: 20),
+  //               const Icon(Icons.radar, color: Colors.indigo),
+  //               const SizedBox(width: 10),
+  //               Text("Radio: ${_radioKm.round()} km"),
+  //               Expanded(
+  //                 child: Slider(
+  //                   value: _radioKm,
+  //                   min: 10,
+  //                   max: 500,
+  //                   divisions: 49,
+  //                   label: "${_radioKm.round()} km",
+  //                   onChanged: (val) => setState(() => _radioKm = val),
+  //                 ),
+  //               ),
+  //               Expanded(
+  //                 child: OutlinedButton.icon(
+  //                   onPressed: () async {
+  //                     final f = await showDatePicker(
+  //                       locale: const Locale('es', 'ES'),
+  //                       context: context,
+  //                       initialDate: DateTime.now(),
+  //                       firstDate: DateTime.now(),
+  //                       lastDate: DateTime.now().add(const Duration(days: 90)),
+  //                     );
+  //                     if (f != null) setState(() => _fechaDesde = f);
+  //                   },
+  //                   icon: const Icon(Icons.calendar_today),
+  //                   label: Text(
+  //                     _fechaDesde == null
+  //                         ? "Fecha Desde"
+  //                         : "${_fechaDesde!.day}/${_fechaDesde!.month}",
+  //                   ),
+  //                 ),
+  //               ),
+  //               const SizedBox(width: 10),
+  //               Expanded(
+  //                 child: OutlinedButton.icon(
+  //                   onPressed: () async {
+  //                     final f = await showDatePicker(
+  //                       locale: const Locale('es', 'ES'),
+  //                       context: context,
+  //                       initialDate: _fechaDesde ?? DateTime.now(),
+  //                       firstDate: DateTime.now(),
+  //                       lastDate: DateTime.now().add(const Duration(days: 90)),
+  //                     );
+  //                     if (f != null) setState(() => _fechaHasta = f);
+  //                   },
+  //                   icon: const Icon(Icons.calendar_month),
+  //                   label: Text(
+  //                     _fechaHasta == null
+  //                         ? "Fecha Hasta"
+  //                         : "${_fechaHasta!.day}/${_fechaHasta!.month}",
+  //                   ),
+  //                 ),
+  //               ),
+  //               if (_fechaDesde != null || _fechaHasta != null)
+  //                 IconButton(
+  //                   onPressed:
+  //                       () => setState(() {
+  //                         _fechaDesde = null;
+  //                         _fechaHasta = null;
+  //                       }),
+  //                   icon: const Icon(Icons.clear, color: Colors.red),
+  //                 ),
+  //             ],
+  //           ),
+  //           const SizedBox(height: 10),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildFiltrosAvanzados() {
     return Card(
       margin: const EdgeInsets.all(10),
@@ -122,95 +222,114 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
         padding: const EdgeInsets.all(15),
         child: Column(
           children: [
-            _buildFiltros(),
+            _buildFiltros(), // Este ya es responsivo por el paso anterior
+            const SizedBox(height: 15),
 
-            const SizedBox(height: 10),
-            // FILTRO DE RADIO (Slider)
-            Row(
-              children: [
-                SizedBox(
-                  width: 160,
-                  child: TextFormField(
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Peso Máx (Ton)",
-                      prefixIcon: Icon(Icons.scale),
-                      border: OutlineInputBorder(),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                bool isMobile = constraints.maxWidth < 600;
+
+                return Wrap(
+                  spacing: 15, // Espacio horizontal entre elementos
+                  runSpacing: 15, // Espacio vertical cuando salta de línea
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  alignment: WrapAlignment.start,
+                  children: [
+                    // PESO MÁXIMO
+                    SizedBox(
+                      width: isMobile ? double.infinity : 160,
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: "Peso Máx (Ton)",
+                          prefixIcon: Icon(Icons.scale),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged:
+                            (val) => setState(
+                              () => _filtroPeso = double.tryParse(val),
+                            ),
+                      ),
                     ),
-                    onChanged: (val) {
-                      setState(() => _filtroPeso = double.tryParse(val));
-                    },
-                  ),
-                ),
-                const SizedBox(width: 20),
-                const Icon(Icons.radar, color: Colors.indigo),
-                const SizedBox(width: 10),
-                Text("Radio: ${_radioKm.round()} km"),
-                Expanded(
-                  child: Slider(
-                    value: _radioKm,
-                    min: 10,
-                    max: 500,
-                    divisions: 49,
-                    label: "${_radioKm.round()} km",
-                    onChanged: (val) => setState(() => _radioKm = val),
-                  ),
-                ),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final f = await showDatePicker(
-                        locale: const Locale('es', 'ES'),
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 90)),
-                      );
-                      if (f != null) setState(() => _fechaDesde = f);
-                    },
-                    icon: const Icon(Icons.calendar_today),
-                    label: Text(
-                      _fechaDesde == null
-                          ? "Fecha Desde"
-                          : "${_fechaDesde!.day}/${_fechaDesde!.month}",
+
+                    // RADIO (Slider)
+                    Container(
+                      width: isMobile ? double.infinity : 300,
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.radar, color: Colors.indigo),
+                          const SizedBox(width: 8),
+                          Text("Radio: ${_radioKm.round()} km"),
+                          Expanded(
+                            child: Slider(
+                              value: _radioKm,
+                              min: 10,
+                              max: 500,
+                              divisions: 49,
+                              onChanged:
+                                  (val) => setState(() => _radioKm = val),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final f = await showDatePicker(
-                        locale: const Locale('es', 'ES'),
-                        context: context,
-                        initialDate: _fechaDesde ?? DateTime.now(),
-                        firstDate: DateTime.now(),
-                        lastDate: DateTime.now().add(const Duration(days: 90)),
-                      );
-                      if (f != null) setState(() => _fechaHasta = f);
-                    },
-                    icon: const Icon(Icons.calendar_month),
-                    label: Text(
-                      _fechaHasta == null
-                          ? "Fecha Hasta"
-                          : "${_fechaHasta!.day}/${_fechaHasta!.month}",
+
+                    // FECHAS (Contenedor responsivo para los dos botones)
+                    SizedBox(
+                      width: isMobile ? double.infinity : null,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Expanded(child: _buildBotonFecha(desde: true)),
+                          const SizedBox(width: 8),
+                          Expanded(child: _buildBotonFecha(desde: false)),
+                          if (_fechaDesde != null || _fechaHasta != null)
+                            IconButton(
+                              onPressed:
+                                  () => setState(() {
+                                    _fechaDesde = null;
+                                    _fechaHasta = null;
+                                  }),
+                              icon: const Icon(Icons.clear, color: Colors.red),
+                            ),
+                        ],
+                      ),
                     ),
-                  ),
-                ),
-                if (_fechaDesde != null || _fechaHasta != null)
-                  IconButton(
-                    onPressed:
-                        () => setState(() {
-                          _fechaDesde = null;
-                          _fechaHasta = null;
-                        }),
-                    icon: const Icon(Icons.clear, color: Colors.red),
-                  ),
-              ],
+                  ],
+                );
+              },
             ),
-            const SizedBox(height: 10),
           ],
         ),
+      ),
+    );
+  }
+
+  // Función auxiliar para los botones de fecha
+  Widget _buildBotonFecha({required bool desde}) {
+    return OutlinedButton.icon(
+      onPressed: () async {
+        final f = await showDatePicker(
+          locale: const Locale('es', 'ES'),
+          context: context,
+          initialDate: desde ? DateTime.now() : (_fechaDesde ?? DateTime.now()),
+          firstDate: DateTime.now(),
+          lastDate: DateTime.now().add(const Duration(days: 90)),
+        );
+        if (f != null)
+          setState(() => desde ? _fechaDesde = f : _fechaHasta = f);
+      },
+      icon: Icon(desde ? Icons.calendar_today : Icons.calendar_month, size: 18),
+      label: Text(
+        desde
+            ? (_fechaDesde == null
+                ? "Desde"
+                : "${_fechaDesde!.day}/${_fechaDesde!.month}")
+            : (_fechaHasta == null
+                ? "Hasta"
+                : "${_fechaHasta!.day}/${_fechaHasta!.month}"),
+        style: const TextStyle(fontSize: 12),
       ),
     );
   }
@@ -251,39 +370,76 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
   }
 
   Widget _buildFiltros() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        // Definimos si es móvil basándonos en el ancho disponible
+        bool isMobile = constraints.maxWidth < 600;
+
+        return isMobile
+            ? Column(
+              children: [
+                // Primera fila: Origen y Destino
+                Row(
+                  children: [
+                    Expanded(child: _buildFiltroOrigen()),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildFiltroDestino()),
+                    IconButton(
+                      onPressed:
+                          () => setState(() {
+                            _filtroOrigen = null;
+                            _filtroDestino = null;
+                          }),
+                      icon: const Icon(Icons.filter_alt_off, color: Colors.red),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                // Segunda fila: Los Chips de radio
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [const Text("Radio en: "), _buildChipsRadio()],
+                ),
+              ],
+            )
+            : Row(
+              // Versión Escritorio (Tu código original con ajustes)
+              children: [
+                Expanded(child: _buildFiltroOrigen()),
+                const SizedBox(width: 10),
+                Expanded(child: _buildFiltroDestino()),
+                IconButton(
+                  onPressed:
+                      () => setState(() {
+                        _filtroOrigen = null;
+                        _filtroDestino = null;
+                      }),
+                  icon: const Icon(Icons.filter_alt_off, color: Colors.red),
+                ),
+                const SizedBox(width: 20),
+                const Text("Radio en: "),
+                _buildChipsRadio(),
+              ],
+            );
+      },
+    );
+  }
+
+  // Función auxiliar para no repetir el código de los Chips
+  Widget _buildChipsRadio() {
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        // Filtro Origen
-        Expanded(child: _buildFiltroOrigen()),
-        const SizedBox(width: 10),
-        // Filtro Destino
-        Expanded(child: _buildFiltroDestino()),
-        // Botón Limpiar
-        IconButton(
-          onPressed:
-              () => setState(() {
-                _filtroOrigen = null;
-                _filtroDestino = null;
-              }),
-          icon: const Icon(Icons.filter_alt_off, color: Colors.red),
-          tooltip: "Limpiar filtros",
+        ChoiceChip(
+          label: const Text("Origen"),
+          selected: !_filtrarPorDestino,
+          onSelected: (val) => setState(() => _filtrarPorDestino = false),
         ),
-        const SizedBox(width: 20),
-        Row(
-          children: [
-            const Text("Filtrar radio en: "),
-            ChoiceChip(
-              label: const Text("Origen"),
-              selected: !_filtrarPorDestino,
-              onSelected: (val) => setState(() => _filtrarPorDestino = false),
-            ),
-            const SizedBox(width: 8),
-            ChoiceChip(
-              label: const Text("Destino"),
-              selected: _filtrarPorDestino,
-              onSelected: (val) => setState(() => _filtrarPorDestino = true),
-            ),
-          ],
+        const SizedBox(width: 8),
+        ChoiceChip(
+          label: const Text("Destino"),
+          selected: _filtrarPorDestino,
+          onSelected: (val) => setState(() => _filtrarPorDestino = true),
         ),
       ],
     );
@@ -293,7 +449,7 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
   Widget build(BuildContext context) {
     return PageLayout(
       title: "Buscar Cargas",
-      icon: Icons.local_shipping_outlined,
+      icon: Icons.local_mall,
       child: Column(
         children: [
           _buildFiltrosAvanzados(),
@@ -741,26 +897,28 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
       mainAxisSize: MainAxisSize.min,
       children: [
         // Origen
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "ORIGEN",
-              style: TextStyle(
-                fontSize: 9,
-                color: Colors.grey,
-                fontWeight: FontWeight.bold,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                "ORIGEN",
+                style: TextStyle(
+                  fontSize: 9,
+                  color: Colors.grey,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            Text(
-              origen,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Colors.indigo,
+              Text(
+                origen,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.indigo,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
 
         // Icono de conexión

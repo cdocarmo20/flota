@@ -1,9 +1,11 @@
+import 'package:cargasuy/models/marcas_vehiculo.dart';
 import 'package:cargasuy/models/usuario.dart';
 import 'package:cargasuy/models/vehiculo.dart';
 import 'package:cargasuy/services/app_state.dart';
 import 'package:cargasuy/services/auth_service.dart';
 import 'package:cargasuy/services/db/transportista_service.dart';
 import 'package:cargasuy/services/db/vehiculo_service.dart';
+import 'package:cargasuy/services/db/viajes_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -24,42 +26,21 @@ class _FlotaPageState extends State<FlotaPage> {
   String _queryFlota = "";
   List<String> _tiposDisponibles = [];
   bool _loadingTipos = true;
+  List<MarcaVehiculo> _listaMarcas = [];
+  String? _marcaSeleccionadaId;
+
+  final user = Supabase.instance.client.auth.currentUser;
 
   Future<void> _cargarFlota() async {
     setState(() => _isLoading = true);
     try {
-      final user = Supabase.instance.client.auth.currentUser;
       final rol = userRole.value;
-
-      var query = Supabase.instance.client
-          .from('vehiculos')
-          .select('*, transportistas(nombre)');
-
-      if (rol == UserRole.transportista) {
-        query = query.eq('transportista_id', user!.id);
-      }
-
-      final response = await query.order('patente', ascending: true);
-
-      final List<Map<String, dynamic>> rawData =
-          List<Map<String, dynamic>>.from(response);
-
+      final data = await VehiculoService().obtenerVehiculos(
+        userRole.value!,
+        user!.id,
+      );
       setState(() {
-        // MAPEAMOS CON CUIDADO PARA EVITAR EL ERROR DE NULL
-        _datosFlota =
-            rawData.map((json) {
-              return {
-                'id': json['id'],
-                'vehiculo': Vehiculo(
-                  id: json['id'] ?? '',
-                  patente: json['patente'] ?? 'S/P',
-                  modelo: json['modelo'] ?? 'Genérico',
-                  capacidad: "${json['capacidad_ton'] ?? 0} Ton",
-                  tipo: json['tipo'] ?? 'S/T',
-                ),
-                'dueno': json['transportistas']?['nombre'] ?? 'Sin Empresa',
-              };
-            }).toList();
+        _datosFlota = data;
         _isLoading = false;
       });
     } catch (e) {
@@ -68,8 +49,21 @@ class _FlotaPageState extends State<FlotaPage> {
     }
   }
 
+  Future<void> _cargarMarcas() async {
+    final data = await VehiculoService().obtenerMarcas();
+
+    setState(() {
+      final Map<String, MarcaVehiculo> marcasUnicas = {};
+      for (var m in data) {
+        marcasUnicas[m['id']] = MarcaVehiculo(id: m['id'], nombre: m['nombre']);
+      }
+      _listaMarcas = marcasUnicas.values.toList();
+    });
+  }
+
   void initState() {
     super.initState();
+    _cargarMarcas();
     _cargarTipos();
     _cargarFlota();
   }
@@ -97,7 +91,7 @@ class _FlotaPageState extends State<FlotaPage> {
               ? FloatingActionButton.extended(
                 // Usamos una función anónima limpia
                 onPressed: () {
-                  _abrirModalNuevoVehiculo(context);
+                  _abrirEditorVehiculo(null);
                 },
                 label: const Text("Nueva Unidad"),
                 icon: const Icon(Icons.add_road),
@@ -135,8 +129,8 @@ class _FlotaPageState extends State<FlotaPage> {
                 itemCount: _datosFiltrados.length,
                 itemBuilder: (context, index) {
                   final item = _datosFiltrados[index];
-                  final v = item['vehiculo'] as Vehiculo;
-                  final dueno = item['dueno'] as String;
+
+                  final v = item['id'] != null ? Vehiculo.fromJson(item) : null;
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       vertical: 12,
@@ -147,22 +141,46 @@ class _FlotaPageState extends State<FlotaPage> {
                     ),
                     child: Row(
                       children: [
-                        _cell(v.patente, 150, isBold: true),
-                        _cell(v.modelo, 200),
-                        _cell(v.capacidad, 120),
+                        Expanded(
+                          child: _cell(
+                            v!.patente.toString(),
+                            100,
+                            isBold: true,
+                          ),
+                        ),
+                        Expanded(child: _cell(v.modelo.toString(), 150)),
+                        Expanded(child: _cell(v.marcaNombre.toString(), 150)),
+                        Expanded(child: _cell(v.capacidad.toString(), 100)),
 
-                        // _cellInteractive(context, dueno, 250, () {
-                        //   context.go('/transportistas?nombre=$dueno');
-                        // }),
                         if (userRole.value == UserRole.admin)
-                          _cellInteractive(context, item['dueno'], 250, () {
-                            final nombreUri = Uri.encodeComponent(
-                              item['dueno'],
-                            ); // Codifica espacios y caracteres
-                            context.go('/transportistas?nombre=$nombreUri');
-                          }),
+                          Expanded(
+                            child: _cellInteractive(
+                              context,
+                              v.dueno.toString(),
+                              250,
+                              () {
+                                final nombreUri = Uri.encodeComponent(
+                                  v.dueno.toString(),
+                                ); // Codifica espacios y caracteres
+                                context.go('/transportistas?nombre=$nombreUri');
+                              },
+                            ),
+                          ),
                         // _cell(dueno, 200, color: Colors.indigo), // Dueño resaltado
-                        _cell(v.tipo, 120),
+                        Flexible(child: _cell(v.tipo.toString(), 120)),
+
+                        Expanded(
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.edit,
+                              color: Colors.blueGrey,
+                            ),
+                            onPressed: () {
+                              // Aquí llamas a la función para abrir el formulario de edición
+                              _abrirEditorVehiculo(v);
+                            },
+                          ),
+                        ),
                       ],
                     ),
                   );
@@ -219,132 +237,260 @@ class _FlotaPageState extends State<FlotaPage> {
     }
   }
 
-  void _abrirModalNuevoVehiculo(BuildContext context) {
-    final formKey = GlobalKey<FormState>();
-    final patenteCtrl = TextEditingController();
-    final modeloCtrl = TextEditingController();
-    final capacidadCtrl = TextEditingController();
-    // String? tipoSeleccionado; // Deberás cargar _tiposDisponibles aquí también
-    // String? tipoSeleccionado = _tiposDisponibles.first;
-    String? tipoSeleccionado =
-        _tiposDisponibles.isNotEmpty ? _tiposDisponibles.first : null;
+  void _abrirEditorVehiculo(Vehiculo? vehiculo) {
+    // Seteamos la marca inicial (si estamos editando)
 
+    _marcaSeleccionadaId = vehiculo?.marcaId;
+
+    final anioCtrl = TextEditingController(
+      text: vehiculo?.anio?.toString() ?? "",
+    );
+    final patenteCtrl = TextEditingController(text: vehiculo?.patente ?? "");
+    final modeloCtrl = TextEditingController(text: vehiculo?.modelo ?? "");
+    final capacidadCtrl = TextEditingController(
+      text: vehiculo?.capacidad ?? "",
+    );
+    String? tipoSeleccionado = vehiculo?.tipo;
+
+    if (tipoSeleccionado == '' && _tiposDisponibles.isNotEmpty) {
+      tipoSeleccionado = _tiposDisponibles.first;
+    }
     showDialog(
       context: context,
-      barrierDismissible: true, // Permite cerrar haciendo clic fuera
-      builder: (BuildContext dialogContext) {
-        return AlertDialog(
-          title: const Text("Nueva Unidad Técnica"),
-          content: SizedBox(
-            width: 500,
-            child: Form(
-              key: formKey,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  _buildInput(patenteCtrl, "Patente", Icons.badge, caps: true),
-                  const SizedBox(height: 15),
-                  _buildInput(
-                    modeloCtrl,
-                    "Modelo / Marca",
-                    Icons.local_shipping,
-                  ),
-                  const SizedBox(height: 15),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildInput(
-                          capacidadCtrl,
-                          "Capacidad (Ton)",
-                          Icons.fitness_center,
-                          // isNumber: true,
-                        ),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child:
-                            _tiposDisponibles.isEmpty
-                                ? const Text("Cargando tipos de vehículo...")
-                                : DropdownButtonFormField<String>(
-                                  value: tipoSeleccionado,
-                                  items:
-                                      _tiposDisponibles
-                                          .map(
-                                            (t) => DropdownMenuItem(
-                                              value: t,
-                                              child: Text(t),
-                                            ),
-                                          )
-                                          .toList(),
-                                  onChanged:
-                                      (v) =>
-                                          setState(() => tipoSeleccionado = v),
-                                  decoration: const InputDecoration(
-                                    labelText: "Tipo de Vehículo",
-                                    border: OutlineInputBorder(),
-                                  ),
-                                  validator:
-                                      (v) => v == null ? "Requerido" : null,
-                                ),
-                      ),
-                      // Expanded(
-                      //   child: DropdownButtonFormField<String>(
-                      //     decoration: const InputDecoration(
-                      //       labelText: "Tipo",
-                      //       border: OutlineInputBorder(),
-                      //     ),
-                      //     items:
-                      //         _tiposDisponibles
-                      //             .map(
-                      //               (t) => DropdownMenuItem(
-                      //                 value: t,
-                      //                 child: Text(t),
-                      //               ),
-                      //             )
-                      //             .toList(),
-                      //     onChanged: (v) => tipoSeleccionado = v,
-                      //     validator: (v) => v == null ? "Requerido" : null,
-                      //   ),
-                      // ),
-                    ],
-                  ),
-                ],
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: Text(
+                vehiculo == null ? "Nuevo Vehículo" : "Editar Vehículo",
               ),
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text("Cancelar"),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (formKey.currentState!.validate()) {
-                  final vehiculoData = {
-                    'transportista_id':
-                        Supabase.instance.client.auth.currentUser!.id,
-                    'patente': patenteCtrl.text.toUpperCase(),
-                    'modelo': modeloCtrl.text,
-                    'capacidad_ton': double.parse(capacidadCtrl.text),
-                    'tipo': tipoSeleccionado,
-                  };
+              content: SingleChildScrollView(
+                child: Column(
+                  children: [
+                    // DROPDOWN DE MARCAS
+                    _buildInput(
+                      patenteCtrl,
+                      "Patente",
+                      Icons.badge,
+                      caps: true,
+                    ),
+                    const SizedBox(height: 15),
+                    _buildInput(modeloCtrl, "Modelo", Icons.local_shipping),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            key: Key(_marcaSeleccionadaId ?? 'vacio'),
+                            value: _marcaSeleccionadaId,
+                            decoration: const InputDecoration(
+                              labelText: "Marca",
+                              border: OutlineInputBorder(),
+                            ),
+                            items: [
+                              ..._listaMarcas.map(
+                                (m) => DropdownMenuItem(
+                                  value: m.id,
+                                  child: Text(m.nombre),
+                                ),
+                              ),
+                              const DropdownMenuItem(
+                                value: "OPCION_NUEVA",
+                                child: Text(
+                                  "+ Agregar nueva marca...",
+                                  style: TextStyle(color: Colors.blue),
+                                ),
+                              ),
+                            ],
+                            onChanged: (val) async {
+                              if (val == "OPCION_NUEVA") {
+                                setState(() => _marcaSeleccionadaId = null);
+                                String? nombre =
+                                    await _pedirNombreMarcaDialogo();
+                                if (nombre != null &&
+                                    nombre.trim().isNotEmpty) {
+                                  final nuevaMarcaMap = await VehiculoService()
+                                      .crearMarca(nombre.trim());
 
-                  AppService.runWithLoading(() async {
-                    await Supabase.instance.client
-                        .from('vehiculos')
-                        .insert(vehiculoData);
-                    Navigator.of(dialogContext).pop();
-                    _cargarFlota(); // Refrescamos la lista de la página
-                    AppService.showAlert("Vehículo registrado con éxito");
-                  });
-                }
-              },
-              child: const Text("Guardar en mi Flota"),
-            ),
-          ],
+                                  final nuevasMarcasData =
+                                      await VehiculoService().obtenerMarcas();
+                                  setDialogState(() {
+                                    _listaMarcas =
+                                        nuevasMarcasData
+                                            .map(
+                                              (m) => MarcaVehiculo(
+                                                id: m['id'],
+                                                nombre: m['nombre'],
+                                              ),
+                                            )
+                                            .toList();
+                                    _marcaSeleccionadaId = nuevaMarcaMap['id'];
+                                  });
+                                } else {
+                                  // Si canceló, reseteamos el dropdown a null o al valor anterior
+                                  setState(() => _marcaSeleccionadaId = null);
+                                }
+                              } else {
+                                setState(() => _marcaSeleccionadaId = val);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _buildInput(
+                            anioCtrl,
+                            "Año",
+                            Icons.date_range_outlined,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildInput(
+                            capacidadCtrl,
+                            "Capacidad (Ton)",
+                            Icons.fitness_center,
+                            // isNumber: true,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child:
+                              _tiposDisponibles.isEmpty
+                                  ? const Text("Cargando tipos de vehículo...")
+                                  : DropdownButtonFormField<String>(
+                                    value: tipoSeleccionado,
+                                    items:
+                                        _tiposDisponibles
+                                            .map(
+                                              (t) => DropdownMenuItem(
+                                                value: t,
+                                                child: Text(t),
+                                              ),
+                                            )
+                                            .toList(),
+                                    onChanged:
+                                        (v) => setState(
+                                          () => tipoSeleccionado = v,
+                                        ),
+                                    decoration: const InputDecoration(
+                                      labelText: "Tipo de Vehículo",
+                                      border: OutlineInputBorder(),
+                                    ),
+                                    validator:
+                                        (v) => v == null ? "Requerido" : null,
+                                  ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed:
+                      () => _guardarVehiculo(
+                        contextDialogo: context,
+                        id: vehiculo?.id, // Si es nulo, crea uno nuevo
+                        patente: patenteCtrl.text,
+                        modelo: modeloCtrl.text,
+                        capacidad: capacidadCtrl.text,
+                        tipo: tipoSeleccionado.toString(),
+                        anio: anioCtrl.text,
+                        marcaId: _marcaSeleccionadaId,
+                      ),
+                  child: const Text("GUARDAR"),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+  }
+
+  Future<String?> _pedirNombreMarcaDialogo() async {
+    String? nombreNuevo;
+    return showDialog<String>(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Nueva Marca"),
+            content: TextField(
+              autofocus: true,
+              decoration: const InputDecoration(hintText: "Ej: Scania"),
+              onChanged: (val) => nombreNuevo = val,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CANCELAR"),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context, nombreNuevo),
+                child: const Text("AÑADIR"),
+              ),
+            ],
+          ),
+    );
+  }
+
+  Future<void> _guardarVehiculo({
+    required BuildContext contextDialogo,
+    String? id,
+    required String patente,
+    required String modelo,
+    required String capacidad,
+    required String tipo,
+    required String? anio,
+    required String? marcaId,
+  }) async {
+    // Validación básica
+    if (marcaId == null || patente.isEmpty || anio == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Por favor, completa Marca, Patente y Año"),
+        ),
+      );
+      return;
+    }
+    try {
+      await VehiculoService().guardarVehiculo(
+        id: id,
+        patente: patente,
+        modelo: modelo,
+        capacidad: capacidad,
+        tipo: tipo,
+        anio: int.parse(anio),
+        marcaId: marcaId,
+        userID: user!.id,
+      );
+
+      if (mounted) {
+        Navigator.pop(contextDialogo);
+        _cargarFlota(); // Refresca la lista principal
+        AppService.showAlert(
+          id == null ? "Vehículo creado" : "Vehículo actualizado",
+        );
+        // ScaffoldMessenger.of(context).showSnackBar(
+        //   SnackBar(
+        //     content: Text(
+        //       id == null ? "Vehículo creado" : "Vehículo actualizado",
+        //     ),
+        //   ),
+        // );
+      }
+    } catch (e) {
+      print("Error al guardar: $e");
+      AppService.showAlert("Error al guardar los datos!");
+      // ScaffoldMessenger.of(context).showSnackBar(
+      //   const SnackBar(content: Text("Error al guardar los datos")),
+      // );
+    }
   }
 
   Widget _buildInput(
@@ -429,20 +575,23 @@ class _FlotaPageState extends State<FlotaPage> {
   }
 
   List<Map<String, dynamic>> get _datosFiltrados {
-    // 1. Si el buscador está vacío, devolvemos toda la lista cargada
     if (_queryFlota.isEmpty) return _datosFlota;
 
     final q = _queryFlota.toLowerCase();
 
-    // 2. Filtramos la lista principal
     return _datosFlota.where((item) {
-      // Extraemos el objeto vehículo del mapa
-      final v = item['vehiculo'] as Vehiculo;
-      final dueno = item['dueno'].toString().toLowerCase();
+      // Usamos ?? '' para que si el campo es null, no rompa el .toLowerCase()
+      final patente = (item['patente'] ?? '').toString().toLowerCase();
+      final modelo = (item['modelo'] ?? '').toString().toLowerCase();
+      // Acceso seguro a la marca anidada
+      final marca =
+          (item['marcas_vehiculos']?['nombre'] ?? '').toString().toLowerCase();
+      // Si tienes un campo dueño, asegúrate de que la llave sea la correcta
+      final dueno = (item['dueno'] ?? '').toString().toLowerCase();
 
-      // Buscamos coincidencia en patente, modelo o nombre del dueño
-      return v.patente.toLowerCase().contains(q) ||
-          v.modelo.toLowerCase().contains(q) ||
+      return patente.contains(q) ||
+          modelo.contains(q) ||
+          marca.contains(q) ||
           dueno.contains(q);
     }).toList();
   }
@@ -484,12 +633,13 @@ class _FlotaPageState extends State<FlotaPage> {
       color: Colors.grey.withOpacity(0.1),
       child: Row(
         children: [
-          _cell("Patente", 150, isBold: true),
-          _cell("Modelo", 200, isBold: true),
-          _cell("Capacidad", 120, isBold: true),
+          Expanded(child: _cell("Patente", 100, isBold: true)),
+          Expanded(child: _cell("Modelo", 150, isBold: true)),
+          Expanded(child: _cell("Marca", 150, isBold: true)),
+          Expanded(child: _cell("Capacidad", 100, isBold: true)),
           if (userRole.value == UserRole.admin)
-            _cell("Transportista", 250, isBold: true),
-          _cell("Tipo", 120, isBold: true),
+            Expanded(child: _cell("Transportista", 200, isBold: true)),
+          Expanded(child: _cell("Tipo", 120, isBold: true)),
         ],
       ),
     );

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-// import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
+import 'package:google_maps_flutter_web/google_maps_flutter_web.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart';
+// import 'package:google_maps_flutter/google_maps_flutter.dart' as gmaps;
 
 class MapaSeleccionPage extends StatefulWidget {
   final gmaps.LatLng posicionInicial; // La ciudad elegida en el Dropdown
@@ -13,7 +15,7 @@ class MapaSeleccionPage extends StatefulWidget {
 
 class _MapaSeleccionPageState extends State<MapaSeleccionPage> {
   late gmaps.LatLng _ubicacionSeleccionada;
-  late gmaps.GoogleMapController _mapController;
+  late GoogleMapController _mapController;
 
   @override
   void initState() {

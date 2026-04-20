@@ -329,36 +329,51 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
                           maxLines: 3,
                         ),
                         const SizedBox(height: 20),
+                        LayoutBuilder(
+                          builder: (context, constraints) {
+                            bool isMobile = constraints.maxWidth < 600;
 
-                        Row(
-                          children: [
-                            const SizedBox(width: 200),
-                            Expanded(
-                              child: _buildInput(
-                                _pesoCtrl,
-                                "Peso Estimado (Toneladas)",
-                                Icons.fitness_center,
-                                isNumber: true,
-                                // onChanged:
-                                //     (_) =>
-                                //         _calcularPrecio(), // Recalcula al escribir
-                              ),
-                            ),
-                            const SizedBox(width: 20),
-                            Expanded(
-                              child: _buildInput(
-                                _tarifaController,
-                                "Tarifa Carga (\$)",
-                                Icons.fitness_center,
-                                isNumber: true,
-                                // onChanged:
-                                //     (_) =>
-                                //         _calcularPrecio(), // Recalcula al escribir
-                              ),
-                            ),
-                            const SizedBox(width: 120),
-                          ],
+                            return isMobile
+                                ? Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: _buildCamposCarga(isRow: false),
+                                )
+                                : Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: _buildCamposCarga(isRow: true),
+                                );
+                          },
                         ),
+
+                        // Row(
+                        //   children: [
+                        //     const SizedBox(width: 200),
+                        //     Expanded(
+                        //       child: _buildInput(
+                        //         _pesoCtrl,
+                        //         "Peso Estimado (Toneladas)",
+                        //         Icons.fitness_center,
+                        //         isNumber: true,
+                        //         // onChanged:
+                        //         //     (_) =>
+                        //         //         _calcularPrecio(), // Recalcula al escribir
+                        //       ),
+                        //     ),
+                        //     const SizedBox(width: 20),
+                        //     Expanded(
+                        //       child: _buildInput(
+                        //         _tarifaController,
+                        //         "Tarifa Carga (\$)",
+                        //         Icons.fitness_center,
+                        //         isNumber: true,
+                        //         // onChanged:
+                        //         //     (_) =>
+                        //         //         _calcularPrecio(), // Recalcula al escribir
+                        //       ),
+                        //     ),
+                        //     const SizedBox(width: 120),
+                        //   ],
+                        // ),
                         if (_precioSugerido > 0)
                           Container(
                             margin: const EdgeInsets.symmetric(vertical: 20),
@@ -426,6 +441,41 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
                 ),
       ),
     );
+  }
+
+  List<Widget> _buildCamposCarga({bool isRow = false}) {
+    final fields = [
+      // CAMPO PESO
+      Expanded(
+        flex: isRow ? 1 : 0,
+        child: TextFormField(
+          controller: _pesoCtrl,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: "Peso (kg)",
+            prefixIcon: Icon(Icons.fitness_center),
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ),
+
+      if (isRow) const SizedBox(width: 20) else const SizedBox(height: 15),
+
+      // CAMPO TARIFA
+      Expanded(
+        flex: isRow ? 1 : 0,
+        child: TextFormField(
+          controller: _tarifaController,
+          keyboardType: TextInputType.number,
+          decoration: const InputDecoration(
+            labelText: "Tarifa (\$U)",
+            prefixIcon: Icon(Icons.payments_outlined),
+            border: OutlineInputBorder(),
+          ),
+        ),
+      ),
+    ];
+    return fields;
   }
 
   List<Widget> _buildRouteFields({bool isRow = false}) {
