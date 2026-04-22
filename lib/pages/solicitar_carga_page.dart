@@ -1,4 +1,4 @@
-import 'package:cargasuy/pages/mapa_seleccion_page.dart';
+// import 'package:cargasuy/pages/mapa_seleccion_page.dart';
 import 'package:cargasuy/services/auth_service.dart';
 import 'package:cargasuy/services/db/localidades_service.dart';
 import 'package:cargasuy/services/db/viajes_service.dart';
@@ -6,20 +6,20 @@ import 'package:cargasuy/services/geocoding_web_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 import '../widgets/page_layout.dart';
-import 'dart:convert';
+// import 'dart:convert';
 
 import '../services/app_state.dart';
 
-class SolicitarViajePage extends StatefulWidget {
-  const SolicitarViajePage({super.key});
+class SolicitarCargaPage extends StatefulWidget {
+  const SolicitarCargaPage({super.key});
 
   @override
-  State<SolicitarViajePage> createState() => _SolicitarViajePageState();
+  State<SolicitarCargaPage> createState() => _SolicitarViajePageState();
 }
 
-class _SolicitarViajePageState extends State<SolicitarViajePage> {
+class _SolicitarViajePageState extends State<SolicitarCargaPage> {
   final _formKey = GlobalKey<FormState>();
   final _descCtrl = TextEditingController();
   final _pesoCtrl = TextEditingController();
@@ -252,194 +252,208 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
 
   @override
   Widget build(BuildContext context) {
-    return PageLayout(
-      title: "Publicar Carga",
-      icon: Icons.add_road_rounded,
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child:
-            _cargandoLocalidades
-                ? const Center(child: CircularProgressIndicator())
-                : SingleChildScrollView(
-                  // Previene el error de RenderFlex
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Ruta del Viaje",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        SizedBox(
-                          width: 200,
-                          child: TextFormField(
-                            controller: _fechaController,
-                            readOnly:
-                                true, // Evita que el usuario escriba manualmente
-                            decoration: const InputDecoration(
-                              labelText: "Fecha del Viaje",
-                              prefixIcon: Icon(Icons.calendar_today),
-                              border: OutlineInputBorder(),
-                              hintText: "Seleccione el día",
-                            ),
-                            onTap: () => _seleccionarFecha(context),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Por favor seleccione una fecha';
-                              }
-                              return null;
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 600;
+    Widget contenido = solicitaCargaContent();
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Publicar Carga")),
+        body: contenido,
+      );
+    } else {
+      return PageLayout(
+        title: "Publicar Carga",
+        icon: Icons.add_road_rounded,
+        child: contenido,
+      );
+    }
+  }
 
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            bool isMobile = constraints.maxWidth < 600;
-                            return isMobile
-                                ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: _buildRouteFields(),
-                                )
-                                : Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: _buildRouteFields(isRow: true),
-                                );
+  Widget solicitaCargaContent() {
+    return Padding(
+      padding: const EdgeInsets.all(10.0),
+      child:
+          _cargandoLocalidades
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                // Previene el error de RenderFlex
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Ruta del Viaje",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      SizedBox(
+                        width: 200,
+                        child: TextFormField(
+                          controller: _fechaController,
+                          readOnly:
+                              true, // Evita que el usuario escriba manualmente
+                          decoration: const InputDecoration(
+                            labelText: "Fecha del Viaje",
+                            prefixIcon: Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(),
+                            hintText: "Seleccione el día",
+                          ),
+                          onTap: () => _seleccionarFecha(context),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Por favor seleccione una fecha';
+                            }
+                            return null;
                           },
                         ),
-                        const SizedBox(height: 30),
-                        const Text(
-                          "Detalles de la Carga",
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 20),
+                      ),
+                      const SizedBox(height: 20),
 
-                        _buildInput(
-                          _descCtrl,
-                          "Descripción de mercadería",
-                          Icons.inventory_2,
-                          maxLines: 3,
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          bool isMobile = constraints.maxWidth < 600;
+                          return isMobile
+                              ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _buildRouteFields(),
+                              )
+                              : Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _buildRouteFields(isRow: true),
+                              );
+                        },
+                      ),
+                      const SizedBox(height: 30),
+                      const Text(
+                        "Detalles de la Carga",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
                         ),
-                        const SizedBox(height: 20),
-                        LayoutBuilder(
-                          builder: (context, constraints) {
-                            bool isMobile = constraints.maxWidth < 600;
+                      ),
+                      const SizedBox(height: 20),
 
-                            return isMobile
-                                ? Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: _buildCamposCarga(isRow: false),
-                                )
-                                : Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: _buildCamposCarga(isRow: true),
-                                );
-                          },
-                        ),
+                      _buildInput(
+                        _descCtrl,
+                        "Descripción de mercadería",
+                        Icons.inventory_2,
+                        maxLines: 3,
+                      ),
+                      const SizedBox(height: 20),
+                      LayoutBuilder(
+                        builder: (context, constraints) {
+                          bool isMobile = constraints.maxWidth < 600;
 
-                        // Row(
-                        //   children: [
-                        //     const SizedBox(width: 200),
-                        //     Expanded(
-                        //       child: _buildInput(
-                        //         _pesoCtrl,
-                        //         "Peso Estimado (Toneladas)",
-                        //         Icons.fitness_center,
-                        //         isNumber: true,
-                        //         // onChanged:
-                        //         //     (_) =>
-                        //         //         _calcularPrecio(), // Recalcula al escribir
-                        //       ),
-                        //     ),
-                        //     const SizedBox(width: 20),
-                        //     Expanded(
-                        //       child: _buildInput(
-                        //         _tarifaController,
-                        //         "Tarifa Carga (\$)",
-                        //         Icons.fitness_center,
-                        //         isNumber: true,
-                        //         // onChanged:
-                        //         //     (_) =>
-                        //         //         _calcularPrecio(), // Recalcula al escribir
-                        //       ),
-                        //     ),
-                        //     const SizedBox(width: 120),
-                        //   ],
-                        // ),
-                        if (_precioSugerido > 0)
-                          Container(
-                            margin: const EdgeInsets.symmetric(vertical: 20),
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: Colors.green.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: Colors.green.withOpacity(0.5),
-                              ),
+                          return isMobile
+                              ? Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _buildCamposCarga(isRow: false),
+                              )
+                              : Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: _buildCamposCarga(isRow: true),
+                              );
+                        },
+                      ),
+
+                      // Row(
+                      //   children: [
+                      //     const SizedBox(width: 200),
+                      //     Expanded(
+                      //       child: _buildInput(
+                      //         _pesoCtrl,
+                      //         "Peso Estimado (Toneladas)",
+                      //         Icons.fitness_center,
+                      //         isNumber: true,
+                      //         // onChanged:
+                      //         //     (_) =>
+                      //         //         _calcularPrecio(), // Recalcula al escribir
+                      //       ),
+                      //     ),
+                      //     const SizedBox(width: 20),
+                      //     Expanded(
+                      //       child: _buildInput(
+                      //         _tarifaController,
+                      //         "Tarifa Carga (\$)",
+                      //         Icons.fitness_center,
+                      //         isNumber: true,
+                      //         // onChanged:
+                      //         //     (_) =>
+                      //         //         _calcularPrecio(), // Recalcula al escribir
+                      //       ),
+                      //     ),
+                      //     const SizedBox(width: 120),
+                      //   ],
+                      // ),
+                      if (_precioSugerido > 0)
+                        Container(
+                          margin: const EdgeInsets.symmetric(vertical: 20),
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: Colors.green.withOpacity(0.5),
                             ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    const Text(
-                                      "Precio Sugerido",
-                                      style: TextStyle(
-                                        color: Colors.green,
-                                        fontWeight: FontWeight.bold,
-                                      ),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    "Precio Sugerido",
+                                    style: TextStyle(
+                                      color: Colors.green,
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    Text(
-                                      "Basado en ${double.tryParse(_tarifaController.text)} por tonelada",
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                Text(
-                                  "\$${_precioSugerido.toStringAsFixed(2)}",
-                                  style: const TextStyle(
-                                    fontSize: 22,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.green,
                                   ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        const SizedBox(height: 40),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 55,
-                          child: ElevatedButton.icon(
-                            onPressed: _enviarSolicitud,
-                            icon: const Icon(Icons.send_rounded),
-                            label: const Text("PUBLICAR SOLICITUD"),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.indigo,
-                              foregroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                  Text(
+                                    "Basado en ${double.tryParse(_tarifaController.text)} por tonelada",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                ],
                               ),
+                              Text(
+                                "\$${_precioSugerido.toStringAsFixed(2)}",
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      const SizedBox(height: 40),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 55,
+                        child: ElevatedButton.icon(
+                          onPressed: _enviarSolicitud,
+                          icon: const Icon(Icons.send_rounded),
+                          label: const Text("PUBLICAR SOLICITUD"),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.indigo,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
-      ),
+              ),
     );
   }
 
@@ -550,20 +564,36 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
         const SizedBox(height: 8),
 
         // 1. Selector de Localidad (Simple)
-        DropdownButtonFormField<String>(
-          value: (_listaNombresCiudades.contains(localidad)) ? localidad : null,
+        Row(
+          children: [
+            Expanded(
+              child: DropdownButtonFormField<String>(
+                value:
+                    (_listaNombresCiudades.contains(localidad))
+                        ? localidad
+                        : null,
 
-          isExpanded: true,
-          decoration: InputDecoration(
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-            hintText: "Elegí la ciudad",
-          ),
-          // Aquí usas tu lista simple de ciudades desde Supabase
-          items:
-              _listaNombresCiudades
-                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                  .toList(),
-          onChanged: onLocalidadChanged,
+                isExpanded: true,
+                decoration: InputDecoration(
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  hintText: "Elegí la ciudad",
+                ),
+                // Aquí usas tu lista simple de ciudades desde Supabase
+                items:
+                    _listaNombresCiudades
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                onChanged: onLocalidadChanged,
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.add_location_alt, color: Colors.blue),
+              tooltip: "Crear nueva localidad",
+              onPressed: _mostrarDialogoNuevaLocalidad,
+            ),
+          ],
         ),
 
         const SizedBox(height: 10),
@@ -592,7 +622,8 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
                     child: Text(
                       direccion ?? "Marcá el punto exacto en el mapa",
                       style: TextStyle(
-                        color: direccion == null ? Colors.white : Colors.white,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                        //  direccion == null ? Colors.white : Colors.white,
                         fontSize: 14,
                         fontWeight:
                             direccion == null
@@ -607,6 +638,66 @@ class _SolicitarViajePageState extends State<SolicitarViajePage> {
             ),
           ),
       ],
+    );
+  }
+
+  Future<void> _mostrarDialogoNuevaLocalidad() async {
+    final nombreCtrl = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder:
+          (context) => AlertDialog(
+            title: const Text("Agregar Nueva Localidad"),
+            content: TextField(
+              controller: nombreCtrl,
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: "Ej: Salto, Uruguay",
+                border: OutlineInputBorder(),
+              ),
+              textCapitalization: TextCapitalization.words,
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("CANCELAR"),
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  if (nombreCtrl.text.trim().isNotEmpty) {
+                    try {
+                      // Ajusta el nombre de la tabla y columnas según tu DB
+                      await LocalidadService().crearLocalidad(
+                        nombreCtrl.text.trim(),
+                        0.0,
+                        0.0,
+                      );
+
+                      // Supabase.instance.client.from('localidades').insert(
+                      //   {'nombre': nombreCtrl.text.trim()},
+                      // );
+
+                      if (mounted) {
+                        Navigator.pop(context);
+                        _cargarLocalidades();
+                        AppService.showAlert("Localidad agregada con éxito!");
+
+                        // ScaffoldMessenger.of(context).showSnackBar(
+                        //   const SnackBar(
+                        //     content: Text("Localidad agregada con éxito"),
+                        //   ),
+                        // );
+                      }
+                    } catch (e) {
+                      print("Error al crear localidad: $e");
+                    }
+                  }
+                },
+                child: const Text("GUARDAR"),
+              ),
+            ],
+          ),
     );
   }
 

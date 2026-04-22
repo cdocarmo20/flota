@@ -48,7 +48,6 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
         user?.userMetadata?['full_name'] ??
         user?.userMetadata?['nombre'] ??
         "Usuario";
-    print(nombre);
     final data =
         await Supabase.instance.client
             .from('clientes')
@@ -204,6 +203,8 @@ class _PerfilUsuarioPageState extends State<PerfilUsuarioPage> {
                   AppService.runWithLoading(() async {
                     final nuevaLoc = await LocalidadService().crearLocalidad(
                       ctrl.text,
+                      0.0,
+                      0.0,
                     );
                     await _cargarLocalidades(); // Refrescamos la lista del dropdown
                     setState(() {

@@ -60,11 +60,21 @@ class AppService {
     await prefs.setBool(_sidebarKey, isSidebarExpanded.value);
   }
 
-  static void toggleTheme() {
-    themeNotifier.value =
-        (themeNotifier.value == ThemeMode.light)
-            ? ThemeMode.dark
-            : ThemeMode.light;
+  static void toggleTheme() async {
+    final prefs = await SharedPreferences.getInstance();
+
+    if (themeNotifier.value == ThemeMode.light) {
+      themeNotifier.value = ThemeMode.dark;
+      await prefs.setString('themeMode', 'dark');
+    } else {
+      themeNotifier.value = ThemeMode.light;
+      await prefs.setString('themeMode', 'light');
+    }
+
+    // themeNotifier.value =
+    //     (themeNotifier.value == ThemeMode.light)
+    //         ? ThemeMode.dark
+    //         : ThemeMode.light;
   }
 
   static Future<void> runWithLoading(Future<void> Function() task) async {

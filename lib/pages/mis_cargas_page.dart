@@ -1,4 +1,5 @@
 import 'package:cargasuy/pages/edita_viaje_page.dart';
+import 'package:cargasuy/pages/editar_carga_page.dart';
 import 'package:cargasuy/services/app_state.dart';
 import 'package:cargasuy/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
@@ -30,32 +31,45 @@ class _MisCargasPageState extends State<MisCargasPage>
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 600;
+    Widget contenido = misCargaContent();
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Mis Cargas")),
+        body: contenido,
+      );
+    } else {
+      return PageLayout(
+        title: "Mis Cargas Publicadas",
+        icon: Icons.reorder,
+        child: contenido,
+      );
+    }
+  }
+
+  Widget misCargaContent() {
     return DefaultTabController(
       length: 2,
-      child: PageLayout(
-        icon: Icons.reorder,
-        title: 'Mis Cargas Publicadas',
-
-        child: Column(
-          children: [
-            TabBar(
+      child: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: "Activas", icon: Icon(Icons.check_circle)),
+              Tab(text: "Historial", icon: Icon(Icons.hourglass_top)),
+            ],
+          ),
+          Expanded(
+            child: TabBarView(
               controller: _tabController,
-              tabs: const [
-                Tab(text: "Activas", icon: Icon(Icons.check_circle)),
-                Tab(text: "Historial", icon: Icon(Icons.hourglass_top)),
+              children: [
+                _buildTabContent(esHistorial: false),
+                _buildTabContent(esHistorial: true),
               ],
             ),
-            Expanded(
-              child: TabBarView(
-                controller: _tabController,
-                children: [
-                  _buildTabContent(esHistorial: false),
-                  _buildTabContent(esHistorial: true),
-                ],
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -144,10 +158,10 @@ class _MisCargasPageState extends State<MisCargasPage>
               ),
               Text(
                 "$ciudad - ${direccion ?? 'Sin dirección exacta'}",
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: Colors.white,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
                 ),
               ),
             ],
@@ -260,7 +274,10 @@ class _MisCargasPageState extends State<MisCargasPage>
           style: TextStyle(
             fontWeight: FontWeight.bold,
             // Texto gris oscuro para cancelados, verde para confirmados
-            color: esHistorial ? colorEstado.withOpacity(0.8) : Colors.white,
+            color:
+                esHistorial
+                    ? colorEstado.withOpacity(0.8)
+                    : Theme.of(context).textTheme.bodyLarge?.color,
           ),
         ),
         subtitle: Text(
@@ -335,7 +352,7 @@ class _MisCargasPageState extends State<MisCargasPage>
                             context,
                             MaterialPageRoute(
                               builder:
-                                  (context) => EditarViajePage(viaje: carga),
+                                  (context) => EditarCargaPage(viaje: carga),
                             ),
                           );
                           _refresh();

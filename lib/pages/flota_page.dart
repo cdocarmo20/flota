@@ -82,6 +82,24 @@ class _FlotaPageState extends State<FlotaPage> {
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 600;
+    Widget contenido = vehiculosContent();
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Flota de Vehículos")),
+        body: contenido,
+      );
+    } else {
+      return PageLayout(
+        title: "Flota de Vehículos",
+        icon: Icons.local_shipping_rounded,
+        child: contenido,
+      );
+    }
+  }
+
+  Widget vehiculosContent() {
     if (_isLoading) return const Center(child: CircularProgressIndicator());
     final bool esTransportista = userRole.value == UserRole.transportista;
 
@@ -476,20 +494,10 @@ class _FlotaPageState extends State<FlotaPage> {
         AppService.showAlert(
           id == null ? "Vehículo creado" : "Vehículo actualizado",
         );
-        // ScaffoldMessenger.of(context).showSnackBar(
-        //   SnackBar(
-        //     content: Text(
-        //       id == null ? "Vehículo creado" : "Vehículo actualizado",
-        //     ),
-        //   ),
-        // );
       }
     } catch (e) {
       print("Error al guardar: $e");
       AppService.showAlert("Error al guardar los datos!");
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(content: Text("Error al guardar los datos")),
-      // );
     }
   }
 

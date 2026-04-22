@@ -294,6 +294,8 @@ class _NuevoTransportistaPageState extends State<NuevoTransportistaPage> {
                   AppService.runWithLoading(() async {
                     final nuevaLoc = await LocalidadService().crearLocalidad(
                       ctrl.text,
+                      0.0,
+                      0.0,
                     );
                     await _cargarLocalidades(); // Refrescamos la lista del dropdown
                     setState(() {

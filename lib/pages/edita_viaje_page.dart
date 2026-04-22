@@ -95,15 +95,15 @@ class _EditarViajePageState extends State<EditarViajePage> {
     // ).showSnackBar(const SnackBar(content: Text("Actualizando carga...")));
 
     try {
-      await ViajesService().actualizarViaje(
-        viajeId: widget.viaje['id'].toString(),
-        descripcion: _descripcionCtrl.text,
-        peso: double.tryParse(_pesoCtrl.text) ?? 0.0,
-        precio: double.tryParse(_precioCtrl.text) ?? 0.0,
-        origenId: _origenId!,
-        destinoId: _destinoId!,
-        fechaViaje: _fechaSeleccionada,
-      );
+      // await ViajesService().actualizarViaje(
+      //   viajeId: widget.viaje['id'].toString(),
+      //   descripcion: _descripcionCtrl.text,
+      //   peso: double.tryParse(_pesoCtrl.text) ?? 0.0,
+      //   precio: double.tryParse(_precioCtrl.text) ?? 0.0,
+      //   origenId: _origenId!,
+      //   destinoId: _destinoId!,
+      //   fechaViaje: _fechaSeleccionada,
+      // );
 
       // 2. Éxito y volver
       if (mounted) {

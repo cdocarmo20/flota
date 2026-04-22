@@ -307,6 +307,8 @@ class _RegistroPageState extends State<RegistroPage> {
                       // 1. Guardar en Supabase
                       final nuevaLoc = await LocalidadService().crearLocalidad(
                         ctrl.text,
+                        0.0,
+                        0.0,
                       );
 
                       // 2. Refrescar la lista de localidades

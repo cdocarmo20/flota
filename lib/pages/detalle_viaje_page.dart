@@ -251,7 +251,10 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
                         ),
                         Text(
                           v['origen_direccion'] ?? "Dirección no especificada",
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),
@@ -273,7 +276,10 @@ class _DetalleViajePageState extends State<DetalleViajePage> {
                         ),
                         Text(
                           v['destino_direccion'] ?? "Dirección no especificada",
-                          style: TextStyle(color: Colors.white, fontSize: 14),
+                          style: TextStyle(
+                            color: Theme.of(context).textTheme.bodyLarge?.color,
+                            fontSize: 14,
+                          ),
                         ),
                       ],
                     ),

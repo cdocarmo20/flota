@@ -12,11 +12,15 @@ class LocalidadService {
     return List<Map<String, dynamic>>.from(response);
   }
 
-  Future<Map<String, dynamic>> crearLocalidad(String nombre) async {
+  Future<Map<String, dynamic>> crearLocalidad(
+    String nombre,
+    double lat,
+    double long,
+  ) async {
     final res =
         await _supabase
             .from('localidades')
-            .insert({'nombre': nombre})
+            .insert({'nombre': nombre, 'latitud': lat, 'longitud': long})
             .select()
             .single();
     return res;

@@ -50,41 +50,55 @@ class _MisViajesTransportistaPageState extends State<MisViajesAceptadosPage>
 
   @override
   Widget build(BuildContext context) {
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 600;
+    Widget contenido = misCargaContent();
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Mis Cargas Aceptadas")),
+        body: contenido,
+      );
+    } else {
+      return PageLayout(
+        title: "Mis Cargas Aceptadas",
+        icon: Icons.airplane_ticket_outlined,
+        child: contenido,
+      );
+    }
+  }
+
+  Widget misCargaContent() {
     return DefaultTabController(
       length: 2,
-      child: PageLayout(
-        icon: Icons.airplane_ticket_outlined,
-        title: 'Mis Cargas Aceptadas',
-        child: Column(
-          children: [
-            TabBar(
-              controller: _tabController,
-              labelColor: Colors.white,
-              unselectedLabelColor: Colors.white70,
-              indicatorColor: Colors.white,
-              indicatorWeight: 3,
-              tabs: [
-                Tab(text: "EN CURSO", icon: Icon(Icons.local_shipping)),
-                Tab(text: "HISTORIAL", icon: Icon(Icons.check_circle)),
-              ],
-            ),
+      child: Column(
+        children: [
+          TabBar(
+            controller: _tabController,
+            labelColor: Theme.of(context).textTheme.bodyLarge?.color,
+            unselectedLabelColor: Theme.of(context).textTheme.bodyLarge?.color,
+            indicatorColor: Theme.of(context).textTheme.bodyLarge?.color,
+            indicatorWeight: 3,
+            tabs: [
+              Tab(text: "EN CURSO", icon: Icon(Icons.local_shipping)),
+              Tab(text: "HISTORIAL", icon: Icon(Icons.check_circle)),
+            ],
+          ),
 
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Expanded(
-                  child: TabBarView(
-                    controller: _tabController,
-                    children: [
-                      // Solapa 1: Viajes Aceptados o Finalizados (esperando confirmación cliente)
-                      _buildListaFiltrada(['ACEPTADO', 'FINALIZADO']),
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: [
+                    // Solapa 1: Viajes Aceptados o Finalizados (esperando confirmación cliente)
+                    _buildListaFiltrada(['ACEPTADO', 'FINALIZADO']),
 
-                      // Solapa 2: Viajes ya confirmados por el cliente
-                      _buildListaFiltrada(['CONFIRMADO']),
-                    ],
-                  ),
+                    // Solapa 2: Viajes ya confirmados por el cliente
+                    _buildListaFiltrada(['CONFIRMADO']),
+                  ],
                 ),
-          ],
-        ),
+              ),
+        ],
       ),
     );
   }

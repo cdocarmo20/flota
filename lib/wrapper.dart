@@ -15,6 +15,10 @@ class MainWrapper extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final miId = Supabase.instance.client.auth.currentUser!.id;
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 650;
     return Stack(
       children: [
         Scaffold(
@@ -25,16 +29,16 @@ class MainWrapper extends StatelessWidget {
               children: [
                 // 1. EL LOGO
                 Image.asset(
-                  'assets/logo.png',
+                  isDarkMode ? 'assets/logo.png' : 'assets/logon.png',
                   height: 35, // Tamaño compacto para el AppBar
                   fit: BoxFit.contain,
                 ),
                 const SizedBox(width: 10),
                 // 2. NOMBRE DE LA APP
-                const Text(
+                Text(
                   'CargasUY',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontWeight: FontWeight.bold,
                     fontSize: 22,
                     letterSpacing: 0.5,
@@ -43,51 +47,56 @@ class MainWrapper extends StatelessWidget {
               ],
             ),
             actions: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 5),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: FutureBuilder<String?>(
-                    future: AppService.getNombreUsuario(), // Llamada al método
-                    builder: (context, snapshot) {
-                      // Mientras la consulta está en viaje
-                      if (snapshot.connectionState == ConnectionState.waiting) {
-                        return const Center(
-                          child: Padding(
-                            padding: EdgeInsets.only(right: 10),
-                            child: SizedBox(
-                              width: 12,
-                              height: 12,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+              if (!isMobile)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 5),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                    child: FutureBuilder<String?>(
+                      future:
+                          AppService.getNombreUsuario(), // Llamada al método
+                      builder: (context, snapshot) {
+                        // Mientras la consulta está en viaje
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.only(right: 10),
+                              child: SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ),
+                          );
+                        }
+
+                        // Cuando ya tenemos el nombre o si hubo un error
+                        final nombre = snapshot.data ?? "Usuario";
+
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 1),
+                          child: Center(
+                            child: Text(
+                              "Hola, $nombre, ¿Qué carga vamos a mover hoy? ",
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
                             ),
                           ),
                         );
-                      }
-
-                      // Cuando ya tenemos el nombre o si hubo un error
-                      final nombre = snapshot.data ?? "Usuario";
-
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 1),
-                        child: Center(
-                          child: Text(
-                            "Hola, $nombre, ¿Qué carga vamos a mover hoy? ",
-                            style: const TextStyle(
-                              color: Colors.black87,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                      },
+                    ),
                   ),
                 ),
-              ),
 
               const SizedBox(width: 10),
               StreamBuilder<List<Map<String, dynamic>>>(

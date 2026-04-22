@@ -49,37 +49,6 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
     });
   }
 
-  Widget _buildSimpleDropdown(
-    String label,
-    String? value,
-    Function(String?) onChanged,
-  ) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: LocalidadService().fetchLocalidades(),
-      builder: (context, snapshot) {
-        return DropdownButtonFormField<String>(
-          value: value,
-          isExpanded: true,
-          decoration: InputDecoration(
-            labelText: label,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 12),
-            border: const OutlineInputBorder(),
-          ),
-          items: [
-            const DropdownMenuItem(value: null, child: Text("Todas")),
-            ...(snapshot.data ?? []).map(
-              (loc) => DropdownMenuItem(
-                value: loc['id'].toString(),
-                child: Text(loc['nombre']),
-              ),
-            ),
-          ],
-          onChanged: onChanged,
-        );
-      },
-    );
-  }
-
   Widget _buildFiltroOrigen() {
     return DropdownButtonFormField<String>(
       value: _filtroOrigenId,
@@ -114,106 +83,6 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
       },
     );
   }
-
-  // Widget _buildFiltrosAvanzados() {
-  //   return Card(
-  //     margin: const EdgeInsets.all(10),
-  //     child: Padding(
-  //       padding: const EdgeInsets.all(15),
-  //       child: Column(
-  //         children: [
-  //           _buildFiltros(),
-
-  //           const SizedBox(height: 10),
-  //           // FILTRO DE RADIO (Slider)
-  //           Row(
-  //             children: [
-  //               SizedBox(
-  //                 width: 160,
-  //                 child: TextFormField(
-  //                   keyboardType: TextInputType.number,
-  //                   decoration: const InputDecoration(
-  //                     labelText: "Peso Máx (Ton)",
-  //                     prefixIcon: Icon(Icons.scale),
-  //                     border: OutlineInputBorder(),
-  //                   ),
-  //                   onChanged: (val) {
-  //                     setState(() => _filtroPeso = double.tryParse(val));
-  //                   },
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 20),
-  //               const Icon(Icons.radar, color: Colors.indigo),
-  //               const SizedBox(width: 10),
-  //               Text("Radio: ${_radioKm.round()} km"),
-  //               Expanded(
-  //                 child: Slider(
-  //                   value: _radioKm,
-  //                   min: 10,
-  //                   max: 500,
-  //                   divisions: 49,
-  //                   label: "${_radioKm.round()} km",
-  //                   onChanged: (val) => setState(() => _radioKm = val),
-  //                 ),
-  //               ),
-  //               Expanded(
-  //                 child: OutlinedButton.icon(
-  //                   onPressed: () async {
-  //                     final f = await showDatePicker(
-  //                       locale: const Locale('es', 'ES'),
-  //                       context: context,
-  //                       initialDate: DateTime.now(),
-  //                       firstDate: DateTime.now(),
-  //                       lastDate: DateTime.now().add(const Duration(days: 90)),
-  //                     );
-  //                     if (f != null) setState(() => _fechaDesde = f);
-  //                   },
-  //                   icon: const Icon(Icons.calendar_today),
-  //                   label: Text(
-  //                     _fechaDesde == null
-  //                         ? "Fecha Desde"
-  //                         : "${_fechaDesde!.day}/${_fechaDesde!.month}",
-  //                   ),
-  //                 ),
-  //               ),
-  //               const SizedBox(width: 10),
-  //               Expanded(
-  //                 child: OutlinedButton.icon(
-  //                   onPressed: () async {
-  //                     final f = await showDatePicker(
-  //                       locale: const Locale('es', 'ES'),
-  //                       context: context,
-  //                       initialDate: _fechaDesde ?? DateTime.now(),
-  //                       firstDate: DateTime.now(),
-  //                       lastDate: DateTime.now().add(const Duration(days: 90)),
-  //                     );
-  //                     if (f != null) setState(() => _fechaHasta = f);
-  //                   },
-  //                   icon: const Icon(Icons.calendar_month),
-  //                   label: Text(
-  //                     _fechaHasta == null
-  //                         ? "Fecha Hasta"
-  //                         : "${_fechaHasta!.day}/${_fechaHasta!.month}",
-  //                   ),
-  //                 ),
-  //               ),
-  //               if (_fechaDesde != null || _fechaHasta != null)
-  //                 IconButton(
-  //                   onPressed:
-  //                       () => setState(() {
-  //                         _fechaDesde = null;
-  //                         _fechaHasta = null;
-  //                       }),
-  //                   icon: const Icon(Icons.clear, color: Colors.red),
-  //                 ),
-  //             ],
-  //           ),
-  //           const SizedBox(height: 10),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildFiltrosAvanzados() {
     return Card(
@@ -417,7 +286,7 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
                   icon: const Icon(Icons.filter_alt_off, color: Colors.red),
                 ),
                 const SizedBox(width: 20),
-                const Text("Radio en: "),
+                const Text("Buscar en: "),
                 _buildChipsRadio(),
               ],
             );
@@ -447,55 +316,70 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return PageLayout(
-      title: "Buscar Cargas",
-      icon: Icons.local_mall,
-      child: Column(
-        children: [
-          _buildFiltrosAvanzados(),
+    final double width = MediaQuery.of(context).size.width;
+    final bool isMobile = width < 600;
+    Widget contenido = cargaDisponibleContent();
+    if (isMobile) {
+      return Scaffold(
+        appBar: AppBar(title: const Text("Buscar Cargas")),
+        body: contenido,
+      );
+    } else {
+      return PageLayout(
+        title: "Buscar Cargas",
+        icon: Icons.local_mall,
+        child: contenido,
+      );
+    }
+  }
 
-          Expanded(
-            child: FutureBuilder<List<Map<String, dynamic>>>(
-              future: _viajesService.fetchCargasCercanas(
-                // Si filtramos por destino, mandamos lat/lon del destino, sino del origen
-                lat:
-                    _filtrarPorDestino
-                        ? (_latDestinoFiltro ?? 0.0)
-                        : (_latOrigenFiltro ?? 0.0),
-                lon:
-                    _filtrarPorDestino
-                        ? (_lonDestinoFiltro ?? 0.0)
-                        : (_lonOrigenFiltro ?? 0.0),
-                radio: _radioKm,
-                buscarEnDestino:
-                    _filtrarPorDestino, // Le avisamos al SQL que busque en destino_id
-                fechaInicio: _fechaDesde,
-                fechaFin: _fechaHasta,
-              ),
-              builder: (context, snapshot) {
-                // print(snapshot.data.toString());
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(
-                    child: Text("No hay cargas disponibles por el momento."),
-                  );
-                }
+  Widget cargaDisponibleContent() {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        _buildFiltrosAvanzados(),
 
-                return ListView.builder(
-                  itemCount: snapshot.data!.length,
-                  itemBuilder: (context, index) {
-                    final viaje = snapshot.data![index];
-                    return _buildCargaCard(viaje);
-                    // return _buildViajeCard(viaje);
-                  },
-                );
-              },
+        Expanded(
+          child: FutureBuilder<List<Map<String, dynamic>>>(
+            future: _viajesService.fetchCargasCercanas(
+              // Si filtramos por destino, mandamos lat/lon del destino, sino del origen
+              lat:
+                  _filtrarPorDestino
+                      ? (_latDestinoFiltro ?? 0.0)
+                      : (_latOrigenFiltro ?? 0.0),
+              lon:
+                  _filtrarPorDestino
+                      ? (_lonDestinoFiltro ?? 0.0)
+                      : (_lonOrigenFiltro ?? 0.0),
+              radio: _radioKm,
+              buscarEnDestino:
+                  _filtrarPorDestino, // Le avisamos al SQL que busque en destino_id
+              fechaInicio: _fechaDesde,
+              fechaFin: _fechaHasta,
             ),
+            builder: (context, snapshot) {
+              // print(snapshot.data.toString());
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return const Center(
+                  child: Text("No hay cargas disponibles por el momento."),
+                );
+              }
+
+              return ListView.builder(
+                itemCount: snapshot.data!.length,
+                itemBuilder: (context, index) {
+                  final viaje = snapshot.data![index];
+                  return _buildCargaCard(viaje);
+                  // return _buildViajeCard(viaje);
+                },
+              );
+            },
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

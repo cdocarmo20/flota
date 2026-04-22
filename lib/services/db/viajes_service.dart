@@ -149,34 +149,39 @@ class ViajesService {
     }
   }
 
-  Future<void> actualizarViaje({
-    required String viajeId,
-    required String descripcion,
-    required double peso,
-    required double precio,
-    required String origenId,
-    required String destinoId,
-    required DateTime? fechaViaje,
-  }) async {
+  Future<void> actualizarViaje(Map<String, dynamic> datos) async {
     try {
       await Supabase.instance.client
           .from('viajes')
           .update({
-            'descripcion_carga': descripcion,
-            'peso_estimado': peso,
-            'precio_ofertado': precio,
-            'origen_id': origenId, // UUID
-            'destino_id': destinoId, // UUID
-            'fecha_viaje':
-                fechaViaje?.toIso8601String().split(
-                  'T',
-                )[0], // Solo la fecha YYYY-MM-DD
+            'origen_id': datos['origen_id'],
+            'destino_id': datos['destino_id'],
+            'origen_direccion': datos['origen_direccion'],
+            'origen_lat': datos['origen_lat'],
+            'origen_lng': datos['origen_lng'],
+            'destino_direccion': datos['destino_direccion'],
+            'destino_lat': datos['destino_lat'],
+            'destino_lng': datos['destino_lng'],
+            'descripcion_carga': datos['descripcion'],
+            'peso_estimado': datos['peso'],
+            'precio_ofertado': datos['precio'],
+            'fecha_viaje': datos['fecha_viaje'],
           })
-          .eq('id', viajeId);
+          .eq('id', datos['idViaje']);
     } catch (e) {
       throw Exception('Error al actualizar: $e');
     }
   }
+
+  // 'descripcion_carga': descripcion,
+  // 'peso_estimado': peso,
+  // 'precio_ofertado': precio,
+  // 'origen_id': origenId, // UUID
+  // 'destino_id': destinoId, // UUID
+  // 'fecha_viaje':
+  //     fechaViaje?.toIso8601String().split(
+  //       'T',
+  //     )[0], // Solo la fecha YYYY-MM-DD
 
   Future<List<Map<String, dynamic>>> obtenerMisCargasSolicitadas() async {
     final userId = Supabase.instance.client.auth.currentUser!.id;

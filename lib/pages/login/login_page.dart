@@ -40,6 +40,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    bool isDarkMode = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       body: Center(
         child: Container(
@@ -61,7 +62,7 @@ class _LoginPageState extends State<LoginPage> {
               Hero(
                 tag: 'logo',
                 child: Image.asset(
-                  'assets/logo.png',
+                  isDarkMode ? 'assets/logo.png' : 'assets/logon.png',
                   height: 120, // Ajusta el tamaño según tu diseño
                   fit: BoxFit.contain,
                 ),

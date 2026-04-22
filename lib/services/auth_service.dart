@@ -1,4 +1,5 @@
 import 'package:cargasuy/models/usuario.dart';
+import 'package:cargasuy/services/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -96,6 +97,7 @@ class AuthService {
     } catch (e) {
       // Captura errores como "Invalid login credentials"
       print("Error de login: $e");
+
       return false;
     }
   }

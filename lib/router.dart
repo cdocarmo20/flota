@@ -10,7 +10,8 @@ import 'package:cargasuy/pages/mis_cargas_page.dart';
 import 'package:cargasuy/pages/nuevo_transportista_page.dart';
 import 'package:cargasuy/pages/placeholder_page.dart';
 import 'package:cargasuy/pages/profile_page.dart';
-import 'package:cargasuy/pages/solicitar_viaje_page.dart';
+import 'package:cargasuy/pages/solicitar_carga_page.dart';
+import 'package:cargasuy/pages/splash_page.dart';
 import 'package:cargasuy/pages/transportistas_page.dart';
 import 'package:cargasuy/pages/login/perfil_usuario_page.dart';
 import 'package:cargasuy/pages/login/register_page.dart';
@@ -23,7 +24,8 @@ import 'pages/dashboard_page.dart';
 // import 'pages/clientes_page.dart';
 
 final appRouter = GoRouter(
-  initialLocation: '/',
+  // initialLocation: '/',
+  initialLocation: '/splash',
   refreshListenable: Listenable.merge([isAuthenticated, userStatus]),
   redirect: (context, state) {
     final bool loggedIn = isAuthenticated.value;
@@ -35,20 +37,17 @@ final appRouter = GoRouter(
 
     // 1. REGLA DE ORO: Si no está logueado y no está en login/registro, MANDAR A LOGIN
     if (!loggedIn) {
-      return (isLoggingIn || isRegistering) ? null : '/login';
+      return (isLoggingIn || isRegistering) ? null : '/splash';
     }
-
     // 2. Si ya está logueado pero intenta ir al login o registro, MANDAR AL HOME
     if (isLoggingIn || isRegistering) {
       return '/';
     }
-
     // 3. Si está logueado pero su cuenta está PENDIENTE, mandarlo a espera
     // (Excepto si ya está en la página de espera)
     if (status == 'PENDIENTE' && state.matchedLocation != '/espera') {
       return '/espera';
     }
-
     // 4. Si ya está ACTIVO y sigue en espera, sacarlo de ahí
     if (status == 'ACTIVO' && state.matchedLocation == '/espera') {
       return '/';
@@ -57,6 +56,7 @@ final appRouter = GoRouter(
     return null;
   },
   routes: [
+    GoRoute(path: '/splash', builder: (context, state) => const SplashPage()),
     GoRoute(path: '/login', builder: (context, state) => const LoginPage()),
     GoRoute(
       path: '/espera',
@@ -101,19 +101,10 @@ final appRouter = GoRouter(
           redirect:
               (context, state) => userRole.value != UserRole.admin ? '/' : null,
         ),
-        GoRoute(
-          path: '/flota',
-          builder:
-              (context, state) => const PageLayout(
-                title: "Flota de Vehículos ",
-                icon: Icons.local_shipping_rounded,
-                child: FlotaPage(),
-              ),
-        ),
-
+        GoRoute(path: '/flota', builder: (context, state) => FlotaPage()),
         GoRoute(
           path: '/solicitar-viaje',
-          builder: (context, state) => const SolicitarViajePage(),
+          builder: (context, state) => const SolicitarCargaPage(),
         ),
 
         // 2. Ruta para que el Cliente vea el historial de sus pedidos
