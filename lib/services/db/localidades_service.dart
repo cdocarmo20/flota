@@ -25,4 +25,15 @@ class LocalidadService {
             .single();
     return res;
   }
+
+  Future<String> obtenerIdLocalidad(String nombre) async {
+    final data =
+        await _supabase
+            .from('localidades') // Ajusta el nombre de tu tabla
+            .select('id')
+            .eq('nombre', nombre)
+            .single();
+
+    return data['id'].toString();
+  }
 }

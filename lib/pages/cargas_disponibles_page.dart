@@ -50,37 +50,96 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
   }
 
   Widget _buildFiltroOrigen() {
-    return DropdownButtonFormField<String>(
-      value: _filtroOrigenId,
-      decoration: const InputDecoration(
-        labelText: "Origen",
-        border: OutlineInputBorder(),
-      ),
-      items: [
-        const DropdownMenuItem(value: null, child: Text("Todas las ciudades")),
-        ..._localidades.map(
-          (loc) => DropdownMenuItem(
-            value: loc['id'].toString(),
-            child: Text(loc['nombre']),
-          ),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 300),
+      child: Autocomplete<Map<String, dynamic>>(
+        // 1. Qué texto mostrar en el input cuando se selecciona
+        displayStringForOption: (option) => option['nombre'],
+
+        // 2. Estado inicial (si ya hay un ID seleccionado)
+        initialValue: TextEditingValue(
+          text:
+              _filtroOrigenId != null
+                  ? _localidades.firstWhere(
+                    (l) => l['id'].toString() == _filtroOrigenId,
+                  )['nombre']
+                  : '',
         ),
-      ],
-      onChanged: (val) {
-        setState(() {
-          _filtroOrigenId = val;
-          if (val != null) {
-            // Buscamos la ciudad elegida para sacar su latitud y longitud
-            final loc = _localidades.firstWhere(
-              (l) => l['id'].toString() == val,
-            );
-            _latOrigenFiltro = loc['latitud'];
-            _lonOrigenFiltro = loc['longitud'];
-          } else {
-            _latOrigenFiltro = null;
-            _lonOrigenFiltro = null;
-          }
-        });
-      },
+
+        // 3. Lógica de búsqueda
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text.isEmpty) return const Iterable.empty();
+          return _localidades.where(
+            (loc) => loc['nombre'].toString().toLowerCase().contains(
+              textEditingValue.text.toLowerCase(),
+            ),
+          );
+        },
+
+        // 4. Diseño del campo de texto con el botón "X"
+        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+          return TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            decoration: InputDecoration(
+              labelText: "Origen",
+              isDense: true,
+              border: const OutlineInputBorder(),
+              suffixIcon:
+                  controller.text.isNotEmpty
+                      ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          controller.clear();
+                          setState(() {
+                            _filtroOrigenId = null;
+                            _latOrigenFiltro = null;
+                            _lonOrigenFiltro = null;
+                          });
+                        },
+                      )
+                      : null,
+            ),
+          );
+        },
+
+        // 5. Listado desplegable controlado
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 300,
+                  maxHeight: 200,
+                ),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options.elementAt(index);
+                    return ListTile(
+                      title: Text(option['nombre']),
+                      onTap: () => onSelected(option),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+
+        // 6. Al seleccionar: Guardamos ID y Coordenadas
+        onSelected: (Map<String, dynamic> selection) {
+          setState(() {
+            _filtroOrigenId = selection['id'].toString();
+            _latOrigenFiltro = selection['latitud'];
+            _lonOrigenFiltro = selection['longitud'];
+          });
+        },
+      ),
     );
   }
 
@@ -204,37 +263,96 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
   }
 
   Widget _buildFiltroDestino() {
-    return DropdownButtonFormField<String>(
-      value: _filtroDestinoId,
-      decoration: const InputDecoration(
-        labelText: "Destino",
-        border: OutlineInputBorder(),
-      ),
-      items: [
-        const DropdownMenuItem(value: null, child: Text("Todas las ciudades")),
-        ..._localidades.map(
-          (loc) => DropdownMenuItem(
-            value: loc['id'].toString(),
-            child: Text(loc['nombre']),
-          ),
+    return ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 300),
+      child: Autocomplete<Map<String, dynamic>>(
+        // 1. Qué texto mostrar en el input cuando se selecciona
+        displayStringForOption: (option) => option['nombre'],
+
+        // 2. Estado inicial (si ya hay un ID seleccionado)
+        initialValue: TextEditingValue(
+          text:
+              _filtroDestinoId != null
+                  ? _localidades.firstWhere(
+                    (l) => l['id'].toString() == _filtroDestinoId,
+                  )['nombre']
+                  : '',
         ),
-      ],
-      onChanged: (val) {
-        setState(() {
-          _filtroDestinoId = val;
-          if (val != null) {
-            // Buscamos la ciudad elegida para sacar su latitud y longitud
-            final loc = _localidades.firstWhere(
-              (l) => l['id'].toString() == val,
-            );
-            _latDestinoFiltro = loc['latitud'];
-            _lonDestinoFiltro = loc['longitud'];
-          } else {
-            _latDestinoFiltro = null;
-            _lonDestinoFiltro = null;
-          }
-        });
-      },
+
+        // 3. Lógica de búsqueda
+        optionsBuilder: (TextEditingValue textEditingValue) {
+          if (textEditingValue.text.isEmpty) return const Iterable.empty();
+          return _localidades.where(
+            (loc) => loc['nombre'].toString().toLowerCase().contains(
+              textEditingValue.text.toLowerCase(),
+            ),
+          );
+        },
+
+        // 4. Diseño del campo de texto con el botón "X"
+        fieldViewBuilder: (context, controller, focusNode, onFieldSubmitted) {
+          return TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            decoration: InputDecoration(
+              labelText: "Destino",
+              isDense: true,
+              border: const OutlineInputBorder(),
+              suffixIcon:
+                  controller.text.isNotEmpty
+                      ? IconButton(
+                        icon: const Icon(Icons.clear, size: 18),
+                        onPressed: () {
+                          controller.clear();
+                          setState(() {
+                            _filtroDestinoId = null;
+                            _latDestinoFiltro = null;
+                            _lonDestinoFiltro = null;
+                          });
+                        },
+                      )
+                      : null,
+            ),
+          );
+        },
+
+        // 5. Listado desplegable controlado
+        optionsViewBuilder: (context, onSelected, options) {
+          return Align(
+            alignment: Alignment.topLeft,
+            child: Material(
+              elevation: 4,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: 300,
+                  maxHeight: 200,
+                ),
+                child: ListView.builder(
+                  padding: EdgeInsets.zero,
+                  shrinkWrap: true,
+                  itemCount: options.length,
+                  itemBuilder: (context, index) {
+                    final option = options.elementAt(index);
+                    return ListTile(
+                      title: Text(option['nombre']),
+                      onTap: () => onSelected(option),
+                    );
+                  },
+                ),
+              ),
+            ),
+          );
+        },
+
+        // 6. Al seleccionar: Guardamos ID y Coordenadas
+        onSelected: (Map<String, dynamic> selection) {
+          setState(() {
+            _filtroDestinoId = selection['id'].toString();
+            _latDestinoFiltro = selection['latitud'];
+            _lonDestinoFiltro = selection['longitud'];
+          });
+        },
+      ),
     );
   }
 
@@ -385,140 +503,129 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
 
   Widget _buildCargaCard(Map<String, dynamic> carga) {
     final bool soyElCreador = carga['creador_id'] == _miId;
+
     return Card(
-      elevation: 3,
-      margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+      elevation: 2,
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
         onTap: () => context.push('/detalle-viaje/${carga['id']}'),
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.circular(12),
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // CABECERA: Precio y Categoría
+              // FILA 1: Ruta y Precio
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.deepOrangeAccent.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Text(
-                      "💰 \$${carga['precio_ofertado']}",
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.deepOrangeAccent,
-                      ),
-                    ),
-                  ),
-                  _buildBadge(carga['tipo_carga'] ?? 'General'),
-                ],
-              ),
-              const SizedBox(height: 15),
-
-              // CUERPO: Ruta (Origen -> Destino)
-              Row(
-                children: [
-                  const Icon(Icons.location_on, color: Colors.blue, size: 20),
-                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       "${carga['origen']['nombre']} ➔ ${carga['destino']['nombre']}",
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 15,
                         fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  Text(
+                    "\$${carga['precio_ofertado']}",
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
+                  ),
+                ],
+              ),
+
+              // FILA 2: Dueño de la carga (NUEVO)
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.person_outline,
+                    size: 14,
+                    color: Colors.grey.shade600,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "Publicado por: ${carga['creador']['nombre'] ?? 'Usuario'}",
+                    style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                  ),
+                ],
+              ),
+
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 8.0),
+                child: Divider(height: 1),
+              ),
+
+              // FILA 3: Info técnica y Contacto
+              Row(
+                children: [
+                  _buildBadge(carga['tipo_carga'] ?? 'General'),
+                  const SizedBox(width: 12),
+                  _buildSmallInfo(
+                    Icons.monitor_weight_outlined,
+                    "${carga['peso_estimado']}T",
+                  ),
+                  const Spacer(),
+                  // Botón de WhatsApp más compacto
+                  GestureDetector(
+                    onTap: () => _contactarCliente(carga['creador']['celular']),
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.message_outlined,
+                        color: Colors.green,
+                        size: 18,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
-              Row(
-                children: [
-                  const CircleAvatar(
-                    radius: 14,
-                    child: Icon(Icons.person, size: 16),
-                  ),
-                  const SizedBox(width: 10),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        carga['creador']['nombre'] ?? 'Usuario',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        carga['creador']['mail'],
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  // Botón de contacto rápido
-                  IconButton(
-                    icon: const Icon(Icons.sms, color: Colors.green),
-                    onPressed:
-                        () => _contactarCliente(carga['creador']['celular']),
-                  ),
-                ],
-              ),
-              // DETALLES: Peso y Fecha
-              const SizedBox(height: 10),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildSmallInfo(
-                    Icons.monitor_weight_outlined,
-                    "${carga['peso_estimado']} Ton.",
-                  ),
-                  _buildSmallInfo(
-                    Icons.calendar_today_outlined,
-                    carga['fecha_viaje'] ?? 'A convenir',
-                  ),
-                ],
-              ),
 
-              const Divider(height: 25),
-
-              // PIE: Descripción corta
-              Text(
-                carga['descripcion_carga'] ?? "Sin descripción adicional",
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-              ),
-              const SizedBox(height: 15),
-              if (carga['estado'] == 'PENDIENTE' && !soyElCreador)
+              // Botón de Acción
+              if (carga['estado'] == 'PENDIENTE' && !soyElCreador) ...[
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton.icon(
+                  height: 35,
+                  child: ElevatedButton(
                     onPressed: () => _abrirModalAceptarCarga(context, carga),
-                    icon: const Icon(Icons.check_circle_outline),
-                    label: const Text("ACEPTAR ESTA CARGA"),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.indigo,
                       foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    child: const Text(
+                      "ACEPTAR CARGA",
+                      style: TextStyle(fontSize: 12),
                     ),
                   ),
-                )
-              else if (soyElCreador)
-                const Chip(
-                  label: Text("TU PUBLICACIÓN"),
-                  backgroundColor: Colors.grey,
                 ),
+              ] else if (soyElCreador) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  "Tu publicación",
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.blue,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
             ],
           ),
         ),
@@ -526,15 +633,26 @@ class _CargasDisponiblesPageState extends State<CargasDisponiblesPage> {
     );
   }
 
+  // Helper para info pequeña más compacta
   Widget _buildSmallInfo(IconData icon, String label) {
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey),
-        const SizedBox(width: 5),
-        Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+        Icon(icon, size: 14, color: Colors.grey),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
       ],
     );
   }
+
+  // Widget _buildSmallInfo(IconData icon, String label) {
+  //   return Row(
+  //     children: [
+  //       Icon(icon, size: 16, color: Colors.grey),
+  //       const SizedBox(width: 5),
+  //       Text(label, style: const TextStyle(fontSize: 13, color: Colors.grey)),
+  //     ],
+  //   );
+  // }
 
   Widget _buildBadge(String texto) {
     return Container(

@@ -104,6 +104,7 @@ class AuthService {
 
   // Cerrar Sesión
   static Future<void> logout() async {
+    await Supabase.instance.client.auth.signOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_authKey, false);
     isAuthenticated.value = false;

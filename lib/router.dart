@@ -10,11 +10,15 @@ import 'package:cargasuy/pages/mis_cargas_page.dart';
 import 'package:cargasuy/pages/nuevo_transportista_page.dart';
 import 'package:cargasuy/pages/placeholder_page.dart';
 import 'package:cargasuy/pages/profile_page.dart';
-import 'package:cargasuy/pages/solicitar_carga_page.dart';
+import 'package:cargasuy/pages/publicar_carga_page.dart';
+import 'package:cargasuy/pages/publicar_vehiculo_page.dart';
 import 'package:cargasuy/pages/splash_page.dart';
 import 'package:cargasuy/pages/transportistas_page.dart';
 import 'package:cargasuy/pages/login/perfil_usuario_page.dart';
 import 'package:cargasuy/pages/login/register_page.dart';
+import 'package:cargasuy/pages/vehiculos_disponibles_page.dart';
+import 'package:cargasuy/pages/mis_vehiculos_publicados_page.dart';
+import 'package:cargasuy/pages/mis_vehiculos_solicitados_page.dart';
 import 'package:cargasuy/services/auth_service.dart';
 import 'package:cargasuy/widgets/page_layout.dart';
 import 'package:flutter/material.dart';
@@ -104,13 +108,33 @@ final appRouter = GoRouter(
         GoRoute(path: '/flota', builder: (context, state) => FlotaPage()),
         GoRoute(
           path: '/solicitar-viaje',
-          builder: (context, state) => const SolicitarCargaPage(),
+          builder: (context, state) => const PublicarCargaPage(),
         ),
 
         // 2. Ruta para que el Cliente vea el historial de sus pedidos
         GoRoute(
           path: '/mis-viajes',
           builder: (context, state) => const MisCargasPage(),
+        ),
+
+        GoRoute(
+          path: '/vehiculos-disponibles',
+          builder: (context, state) => const VehiculosDisponiblesPage(),
+        ),
+
+        GoRoute(
+          path: '/mis-vehiculos-publicados',
+          builder: (context, state) => const MisVehiculosPublicadosPage(),
+        ),
+
+        GoRoute(
+          path: '/mis-vehiculos-solicitados',
+          builder: (context, state) => const MisVehiculosSolicitadosPage(),
+        ),
+
+        GoRoute(
+          path: '/publicar-vehiculo',
+          builder: (context, state) => const PublicarVehiculosPage(),
         ),
 
         // 3. Ruta para que el Transportista vea cargas para aceptar

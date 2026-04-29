@@ -36,169 +36,288 @@ class CustomSidebar extends StatelessWidget {
                             isSidebarExpanded.value = !isSidebarExpanded.value,
                   ),
                   const Divider(),
-                  // 1. Ítem Simple
-                  _navItem(context, Icons.dashboard, "Inicio", "/", isExpanded),
-                  if (rol != UserRole.admin) ...[
-                    // if (rol == UserRole.cliente) ...[
-                    _navItem(
-                      context,
-                      Icons.add_road,
-                      "Publicar Carga",
-                      "/solicitar-viaje",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.local_mall,
-                      "Cargas Disponibles",
-                      "/cargas-disponibles",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.reorder,
-                      "Mis Cargas Publicadas",
-                      "/mis-viajes",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.airplane_ticket_outlined,
-                      "Mis Cargas Aceptadas",
-                      "/cargas-aceptadas",
-                      isExpanded,
-                    ),
-
-                    // ],
-                    // if (rol == UserRole.transportista) ...[
-                    _navItem(
-                      context,
-                      Icons.local_shipping_rounded,
-                      "Mi Flota",
-                      "/flota",
-                      isExpanded,
-                    ),
-                  ],
-                  // ],
-                  if (rol == UserRole.admin) ...[
-                    _navItem(
-                      context,
-                      Icons.people,
-                      "Clientes(Usuarios)",
-                      "/admin-usuarios",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.person_pin_outlined,
-                      "Transportistas",
-                      "/transportistas",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.local_shipping_rounded,
-                      "Flota",
-                      "/flota",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.alternate_email,
-                      "Mis Viajes",
-                      "/mis-viajes",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.add_road,
-                      "Publicar Carga",
-                      "/solicitar-viaje",
-                      isExpanded,
-                    ),
-                    _navItem(
-                      context,
-                      Icons.local_mall,
-                      "Cargas Disponibles",
-                      "/cargas-disponibles",
-                      isExpanded,
-                    ),
-
-                    _navItem(
-                      context,
-                      Icons.airplane_ticket_outlined,
-                      "Mis Cargas Aceptadas",
-                      "/cargas-aceptadas",
-                      isExpanded,
-                    ),
-                    // 2. ÍTEM CON SUBMENÚ (Uso de ExpansionTile)
-                    if (isExpanded)
-                      Theme(
-                        data: Theme.of(
-                          context,
-                        ).copyWith(dividerColor: Colors.transparent),
-                        child: ExpansionTile(
-                          leading: const Icon(Icons.analytics),
-                          title: const Text(
-                            "Reportes",
-                            style: TextStyle(fontSize: 14),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          // 1. Ítem Simple
+                          _navItem(
+                            context,
+                            Icons.dashboard,
+                            "Inicio",
+                            "/",
+                            isExpanded,
                           ),
-                          children: [
-                            _subNavItem(context, "Ventas Diarias", "/ventas"),
-                            _subNavItem(context, "Stock Actual", "/stock"),
+                          const Divider(
+                            height: 20, // Espacio total que ocupa el separador
+                            thickness: 1, // Grosor de la línea
+                            indent: 15, // Espacio desde la izquierda
+                            endIndent: 15, // Espacio desde la derecha
+                            color:
+                                Colors
+                                    .grey, // Puedes usar Theme.of(context).dividerColor
+                          ),
+                          if (rol != UserRole.admin) ...[
+                            // if (rol == UserRole.cliente) ...[
+                            // const Padding(
+                            //   padding: EdgeInsets.only(left: 16, top: 10, bottom: 2),
+                            //   child: Text(
+                            //     "ADMINISTRACIÓN",
+                            //     style: TextStyle(
+                            //       fontSize: 12,
+                            //       fontWeight: FontWeight.bold,
+                            //       color: Colors.grey,
+                            //       letterSpacing: 1.2,
+                            //     ),
+                            //   ),
+                            // ),
+                            _navItem(
+                              context,
+                              Icons.local_mall,
+                              "Cargas Disponibles",
+                              "/cargas-disponibles",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.search,
+                              "Vehículos Disponibles",
+                              "/vehiculos-disponibles",
+                              isExpanded,
+                            ),
+
+                            const Divider(
+                              height:
+                                  20, // Espacio total que ocupa el separador
+                              thickness: 1, // Grosor de la línea
+                              indent: 15, // Espacio desde la izquierda
+                              endIndent: 15, // Espacio desde la derecha
+                              color:
+                                  Colors
+                                      .grey, // Puedes usar Theme.of(context).dividerColor
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.add_road,
+                              "Publicar Carga",
+                              "/solicitar-viaje",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.reorder,
+                              "Mis Cargas Publicadas",
+                              "/mis-viajes",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.checklist_outlined,
+                              "Mis Cargas Aceptadas",
+                              "/cargas-aceptadas",
+                              isExpanded,
+                            ),
+                            const Divider(
+                              height:
+                                  20, // Espacio total que ocupa el separador
+                              thickness: 1, // Grosor de la línea
+                              indent: 15, // Espacio desde la izquierda
+                              endIndent: 15, // Espacio desde la derecha
+                              color:
+                                  Colors
+                                      .grey, // Puedes usar Theme.of(context).dividerColor
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.airport_shuttle_outlined,
+                              "Publicar Vehículos",
+                              "/publicar-vehiculo",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.reorder,
+                              "Mis Vehículos Publicados",
+                              "/mis-vehiculos-publicados",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.checklist_outlined,
+                              "Mis Vehículos Solicitados",
+                              "/mis-vehiculos-solicitados",
+                              isExpanded,
+                            ),
+                            const Divider(
+                              height:
+                                  20, // Espacio total que ocupa el separador
+                              thickness: 1, // Grosor de la línea
+                              indent: 15, // Espacio desde la izquierda
+                              endIndent: 15, // Espacio desde la derecha
+                              color:
+                                  Colors
+                                      .grey, // Puedes usar Theme.of(context).dividerColor
+                            ),
+                            // ],
+                            // if (rol == UserRole.transportista) ...[
+                            _navItem(
+                              context,
+                              Icons.local_shipping_rounded,
+                              "Mi Flota",
+                              "/flota",
+                              isExpanded,
+                            ),
                           ],
-                        ),
-                      )
-                    else
-                      // Si está colapsado, mostramos solo el icono principal
-                      _navItem(
-                        context,
-                        Icons.analytics,
-                        "Reportes",
-                        "/ventas",
-                        false,
+                          // ],
+                          if (rol == UserRole.admin) ...[
+                            _navItem(
+                              context,
+                              Icons.people,
+                              "Clientes(Usuarios)",
+                              "/admin-usuarios",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.person_pin_outlined,
+                              "Transportistas",
+                              "/transportistas",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.local_shipping_rounded,
+                              "Flota",
+                              "/flota",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.alternate_email,
+                              "Mis Viajes",
+                              "/mis-viajes",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.add_road,
+                              "Publicar Carga",
+                              "/solicitar-viaje",
+                              isExpanded,
+                            ),
+                            _navItem(
+                              context,
+                              Icons.local_mall,
+                              "Cargas Disponibles",
+                              "/cargas-disponibles",
+                              isExpanded,
+                            ),
+
+                            _navItem(
+                              context,
+                              Icons.airplane_ticket_outlined,
+                              "Mis Cargas Aceptadas",
+                              "/cargas-aceptadas",
+                              isExpanded,
+                            ),
+                            // 2. ÍTEM CON SUBMENÚ (Uso de ExpansionTile)
+                            if (isExpanded)
+                              Theme(
+                                data: Theme.of(
+                                  context,
+                                ).copyWith(dividerColor: Colors.transparent),
+                                child: ExpansionTile(
+                                  leading: const Icon(Icons.analytics),
+                                  title: const Text(
+                                    "Reportes",
+                                    style: TextStyle(fontSize: 14),
+                                  ),
+                                  children: [
+                                    _subNavItem(
+                                      context,
+                                      "Ventas Diarias",
+                                      "/ventas",
+                                    ),
+                                    _subNavItem(
+                                      context,
+                                      "Stock Actual",
+                                      "/stock",
+                                    ),
+                                  ],
+                                ),
+                              )
+                            else
+                              // Si está colapsado, mostramos solo el icono principal
+                              _navItem(
+                                context,
+                                Icons.analytics,
+                                "Reportes",
+                                "/ventas",
+                                false,
+                              ),
+                          ],
+                        ],
                       ),
-                  ],
+                    ),
+                  ),
 
                   // 3. Otro Ítem Simple
-                  const Spacer(),
                   _buildThemeToggle(isExpanded),
                   // const SizedBox(height: 20),
                   const Divider(),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ListTile(
-                          leading: const Icon(
+                  if (isExpanded)
+                    Row(
+                      children: [
+                        Expanded(
+                          child: ListTile(
+                            leading: const Icon(
+                              Icons.logout_rounded,
+                              color: Colors.redAccent,
+                            ),
+                            title: const Text("Cerrar Sesión"),
+                            onTap: () async {
+                              await AuthService.logout();
+                              if (context.mounted) context.go('/login');
+                            },
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.manage_accounts_outlined),
+                          onPressed: () => context.go("/mi-perfil"),
+                        ),
+                        const SizedBox(width: 8),
+                      ],
+                    )
+                  else
+                    Column(
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.manage_accounts_outlined),
+                          onPressed: () => context.go("/mi-perfil"),
+                        ),
+                        IconButton(
+                          icon: const Icon(
                             Icons.logout_rounded,
                             color: Colors.redAccent,
                           ),
-                          title:
-                              isExpanded ? const Text("Cerrar Sesión") : null,
-                          onTap: () async {
+                          onPressed: () async {
                             await AuthService.logout();
                             if (context.mounted) context.go('/login');
                           },
                         ),
-                      ),
-                      IconButton(
-                        icon: Icon(Icons.manage_accounts_outlined),
-                        onPressed: () {
-                          String path = "/mi-perfil";
-                          // final bool isSel =
-                          //     GoRouterState.of(context).uri.toString() == path;
-                          context.go(path);
-                        },
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   const SizedBox(height: 10),
                 ],
               ),

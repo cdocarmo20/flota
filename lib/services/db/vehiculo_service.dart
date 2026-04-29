@@ -70,7 +70,7 @@ class VehiculoService {
       'patente': patente,
       'modelo': modelo,
       'capacidad_ton': capacidad,
-      'tipo': tipo,
+      'tipo_id': tipo,
       'anio': anio,
       'marca_id': marcaId,
       'transportista_id': userID, // ID del dueño
@@ -116,7 +116,9 @@ class VehiculoService {
   ) async {
     var query = Supabase.instance.client
         .from('vehiculos')
-        .select('*, transportistas(nombre), marcas_vehiculos(nombre)');
+        .select(
+          '*, transportistas(nombre), marcas_vehiculos(nombre), tipo_vehiculo:tipo_id(nombre)',
+        );
 
     if (rol == UserRole.transportista) {
       query = query.eq('transportista_id', userId);

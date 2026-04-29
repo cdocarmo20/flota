@@ -17,22 +17,22 @@ class _SplashPageState extends State<SplashPage> {
     // _navigateToHome();
   }
 
-  _navigateToHome() async {
-    // Esperamos 3 segundos para que se vea el logo
-    await Future.delayed(const Duration(seconds: 3));
+  // _navigateToHome() async {
+  //   // Esperamos 3 segundos para que se vea el logo
+  //   await Future.delayed(const Duration(seconds: 3));
 
-    if (mounted) {
-      // Usamos go para que el usuario no pueda volver atrás al splash
-      context.go('/mis-viajes');
-    }
-  }
+  //   if (mounted) {
+  //     // Usamos go para que el usuario no pueda volver atrás al splash
+  //     context.go('/mis-viajes');
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
     bool isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
       // Usamos un fondo oscuro para que el logo blanco resalte
-      backgroundColor: const Color(0xFF1A1A1A),
+      backgroundColor: Theme.of(context).cardColor,
       body: Center(
         child: TweenAnimationBuilder(
           duration: const Duration(milliseconds: 1500),

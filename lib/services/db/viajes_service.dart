@@ -599,4 +599,155 @@ class ViajesService {
     final response = await query.order('fecha_solicitud', ascending: false);
     return List<Map<String, dynamic>>.from(response);
   }
+
+  Future<void> crearViajeVehiculo({
+    required String vehiculoId,
+    required String idOrigen,
+    required String idDestino,
+    required DateTime fecha,
+    required String descripcion,
+  }) async {
+    final userId = _supabase.auth.currentUser?.id;
+
+    if (userId == null) throw Exception("Usuario no autenticado");
+
+    await _supabase.from('viaje_vehiculos').insert({
+      'creador_id': userId,
+      'vehiculo_id': vehiculoId,
+      'origen_id': idOrigen,
+      'destino_id': idDestino,
+      'fecha_disponibilidad': fecha.toIso8601String(),
+      'descripcion': descripcion,
+      'estado': 'ACTIVO',
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> buscarViajes({
+    String? idOrigen,
+    String? idDestino,
+    DateTime? fecha,
+  }) async {
+    // Iniciamos la consulta base (trae todos)
+    try {
+      var query = _supabase
+          .from('viaje_vehiculos')
+          .select('''*, 
+            origen:origen_id(nombre), 
+            destino:destino_id(nombre),
+            creador:clientes!creador_id(nombre, telefono), 
+            vehiculo:vehiculo_id(patente, modelo, tipo_vehiculo:tipo_id(nombre) )''')
+          .eq('estado', 'ACTIVO'); // Solo mostramos los que nadie ha tomado
+      // .is_('interesado_id', null);
+
+      if (idOrigen != null) {
+        query = query.eq('origen_id', idOrigen);
+      }
+
+      if (idDestino != null) {
+        query = query.eq('destino_id', idDestino);
+      }
+
+      if (fecha != null) {
+        String fechaIso = fecha.toIso8601String().split('T')[0];
+        query = query
+            .gte('fecha_disponibilidad', '${fechaIso}T00:00:00')
+            .lte('fecha_disponibilidad', '${fechaIso}T23:59:59');
+      }
+      // Ordenamos para que los más recientes aparezcan primero
+      return await query.order('fecha_disponibilidad', ascending: true);
+    } catch (e) {
+      throw Exception('Error al cargar la flota: $e');
+    }
+  }
+
+  Future<void> tomarViaje(String viajeId) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) throw Exception("Debes iniciar sesión");
+    try {
+      print(user.id);
+      await _supabase
+          .from('viaje_vehiculos')
+          .update({
+            'interesado_id': user.id, // El ID del usuario actual
+            'estado': 'RESERVADO', // Cambiamos el estado
+          })
+          .eq('id', viajeId);
+    } catch (e) {
+      throw Exception('Error al cargar la flota: $e');
+    }
+  }
+
+  // Cambia el estado a "EN TRANSITO" cuando el viaje efectivamente comienza
+  Future<void> iniciarViajeVehiculo(String viajeId) async {
+    try {
+      await _supabase
+          .from('viaje_vehiculos')
+          .update({'estado': 'EN TRANSITO'})
+          .eq('id', viajeId);
+    } catch (e) {
+      throw Exception('Error al iniciar el viaje del vehiculo: $e');
+    }
+  }
+
+  // Cambia el estado a "FINALIZADO" cuando se completa la entrega
+  Future<void> finalizarViajeVehiculo(String viajeId) async {
+    try {
+      await _supabase
+          .from('viaje_vehiculos')
+          .update({'estado': 'FINALIZADO'})
+          .eq('id', viajeId);
+    } catch (e) {
+      throw Exception('Error al finalizar el viaje del vehiculo: $e');
+    }
+  }
+
+  // Cambia el estado a "CANCELADO" en caso de que se cancele la reserva
+  Future<void> cancelarViajeVehiculo(String viajeId) async {
+    try {
+      await _supabase
+          .from('viaje_vehiculos')
+          .update({'estado': 'CANCELADO'})
+          .eq('id', viajeId);
+    } catch (e) {
+      throw Exception('Error al cancelar el viaje del vehiculo: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> obtenerMisVehiculosPublicados() async {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    try {
+      final query = _supabase
+          .from('viaje_vehiculos')
+          .select('''*, 
+            origen:origen_id(nombre), 
+            destino:destino_id(nombre),
+            interesado:clientes!interesado_id(nombre, telefono), 
+            vehiculo:vehiculo_id(patente, modelo, tipo_vehiculo:tipo_id(nombre) )''')
+          .eq('creador_id', userId)
+          .order('fecha_disponibilidad', ascending: false);
+      final response = await query;
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      throw Exception('Error al cargar mis vehículos publicados: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> obtenerMisVehiculosSolicitados() async {
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    try {
+      final query = _supabase
+          .from('viaje_vehiculos')
+          .select('''*, 
+            origen:origen_id(nombre), 
+            destino:destino_id(nombre),
+            creador:clientes!creador_id(nombre, telefono), 
+            vehiculo:vehiculo_id(patente, modelo, tipo_vehiculo:tipo_id(nombre) )''')
+          .eq('interesado_id', userId)
+          .order('fecha_disponibilidad', ascending: false);
+      final response = await query;
+      return List<Map<String, dynamic>>.from(response);
+    } catch (e) {
+      throw Exception('Error al cargar mis vehículos solicitados: $e');
+    }
+  }
 }

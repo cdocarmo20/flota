@@ -42,13 +42,19 @@ class TransportistaService {
     }
   }
 
-  Future<List<String>> fetchTiposVehiculo() async {
-    final response = await _supabase
-        .from('tipos_vehiculo')
-        .select('nombre')
-        .order('nombre', ascending: true);
+  Future<List<Map<String, dynamic>>> fetchTiposVehiculo() async {
+    try {
+      // Traemos ID y Nombre de la tabla tipo_vehiculo
+      final List<Map<String, dynamic>> data = await _supabase
+          .from('tipos_vehiculo')
+          .select('id, nombre')
+          .order('nombre', ascending: true);
 
-    return (response as List).map((item) => item['nombre'] as String).toList();
+      return data;
+    } catch (e) {
+      print("Error al obtener tipos: $e");
+      return [];
+    }
   }
 
   // Guardar un nuevo tipo y devolver el nombre

@@ -12,14 +12,14 @@ import '../widgets/page_layout.dart';
 
 import '../services/app_state.dart';
 
-class SolicitarCargaPage extends StatefulWidget {
-  const SolicitarCargaPage({super.key});
+class PublicarCargaPage extends StatefulWidget {
+  const PublicarCargaPage({super.key});
 
   @override
-  State<SolicitarCargaPage> createState() => _SolicitarViajePageState();
+  State<PublicarCargaPage> createState() => _PublicarCargaPageState();
 }
 
-class _SolicitarViajePageState extends State<SolicitarCargaPage> {
+class _PublicarCargaPageState extends State<PublicarCargaPage> {
   final _formKey = GlobalKey<FormState>();
   final _descCtrl = TextEditingController();
   final _pesoCtrl = TextEditingController();
@@ -68,19 +68,19 @@ class _SolicitarViajePageState extends State<SolicitarCargaPage> {
     }
   }
 
-  void _calcularPrecio() {
-    final peso = double.tryParse(_pesoCtrl.text);
-    var tarifa = double.tryParse(_tarifaController.text);
+  // void _calcularPrecio() {
+  //   final peso = double.tryParse(_pesoCtrl.text);
+  //   var tarifa = double.tryParse(_tarifaController.text);
 
-    tarifa ??= 0;
-    if (peso != null) {
-      setState(() {
-        _precioSugerido = peso * tarifa!;
-      });
-    } else {
-      setState(() => _precioSugerido = 0.0);
-    }
-  }
+  //   tarifa ??= 0;
+  //   if (peso != null) {
+  //     setState(() {
+  //       _precioSugerido = peso * tarifa!;
+  //     });
+  //   } else {
+  //     setState(() => _precioSugerido = 0.0);
+  //   }
+  // }
 
   Future<void> _cargarLocalidades() async {
     try {
@@ -119,11 +119,6 @@ class _SolicitarViajePageState extends State<SolicitarCargaPage> {
       AppService.showAlert(
         "Por favor, seleccioná los puntos exactos en el mapa",
       );
-      // ScaffoldMessenger.of(context).showSnackBar(
-      //   const SnackBar(
-      //     content: Text("Por favor, seleccioná los puntos exactos en el mapa"),
-      //   ),
-      // );
       return;
     }
 
@@ -360,79 +355,50 @@ class _SolicitarViajePageState extends State<SolicitarCargaPage> {
                         },
                       ),
 
-                      // Row(
-                      //   children: [
-                      //     const SizedBox(width: 200),
-                      //     Expanded(
-                      //       child: _buildInput(
-                      //         _pesoCtrl,
-                      //         "Peso Estimado (Toneladas)",
-                      //         Icons.fitness_center,
-                      //         isNumber: true,
-                      //         // onChanged:
-                      //         //     (_) =>
-                      //         //         _calcularPrecio(), // Recalcula al escribir
+                      // if (_precioSugerido > 0)
+                      //   Container(
+                      //     margin: const EdgeInsets.symmetric(vertical: 20),
+                      //     padding: const EdgeInsets.all(20),
+                      //     decoration: BoxDecoration(
+                      //       color: Colors.green.withOpacity(0.1),
+                      //       borderRadius: BorderRadius.circular(12),
+                      //       border: Border.all(
+                      //         color: Colors.green.withOpacity(0.5),
                       //       ),
                       //     ),
-                      //     const SizedBox(width: 20),
-                      //     Expanded(
-                      //       child: _buildInput(
-                      //         _tarifaController,
-                      //         "Tarifa Carga (\$)",
-                      //         Icons.fitness_center,
-                      //         isNumber: true,
-                      //         // onChanged:
-                      //         //     (_) =>
-                      //         //         _calcularPrecio(), // Recalcula al escribir
-                      //       ),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      //       children: [
+                      //         Column(
+                      //           crossAxisAlignment: CrossAxisAlignment.start,
+                      //           children: [
+                      //             const Text(
+                      //               "Precio Sugerido",
+                      //               style: TextStyle(
+                      //                 color: Colors.green,
+                      //                 fontWeight: FontWeight.bold,
+                      //               ),
+                      //             ),
+                      //             Text(
+                      //               "Basado en ${double.tryParse(_tarifaController.text)} por tonelada",
+                      //               style: const TextStyle(
+                      //                 fontSize: 12,
+                      //                 color: Colors.grey,
+                      //               ),
+                      //             ),
+                      //           ],
+                      //         ),
+                      //         Text(
+                      //           "\$${_precioSugerido.toStringAsFixed(2)}",
+                      //           style: const TextStyle(
+                      //             fontSize: 22,
+                      //             fontWeight: FontWeight.bold,
+                      //             color: Colors.green,
+                      //           ),
+                      //         ),
+                      //       ],
                       //     ),
-                      //     const SizedBox(width: 120),
-                      //   ],
-                      // ),
-                      if (_precioSugerido > 0)
-                        Container(
-                          margin: const EdgeInsets.symmetric(vertical: 20),
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: Colors.green.withOpacity(0.1),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: Colors.green.withOpacity(0.5),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    "Precio Sugerido",
-                                    style: TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    "Basado en ${double.tryParse(_tarifaController.text)} por tonelada",
-                                    style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              Text(
-                                "\$${_precioSugerido.toStringAsFixed(2)}",
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
+                      //   ),
                       const SizedBox(height: 40),
                       SizedBox(
                         width: double.infinity,
@@ -549,6 +515,164 @@ class _SolicitarViajePageState extends State<SolicitarCargaPage> {
   }
 
   Widget _seccionUbicacion({
+    required bool esOrigen,
+    required String titulo,
+    required String? localidad,
+    required String? direccion,
+    required Function(String?) onLocalidadChanged,
+    required Function(LatLng, String) onMapaConfirmado,
+  }) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(titulo, style: const TextStyle(fontWeight: FontWeight.bold)),
+        const SizedBox(height: 8),
+
+        // 1. Selector de Localidad con Autocomplete
+        Row(
+          children: [
+            Expanded(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 300),
+                child: Autocomplete<String>(
+                  initialValue: TextEditingValue(text: localidad ?? ''),
+
+                  // 1. Filtrado de opciones
+                  optionsBuilder: (TextEditingValue textEditingValue) {
+                    if (textEditingValue.text.isEmpty)
+                      return const Iterable<String>.empty();
+                    return _listaNombresCiudades.where(
+                      (option) => option.toLowerCase().contains(
+                        textEditingValue.text.toLowerCase(),
+                      ),
+                    );
+                  },
+
+                  // 2. Campo de texto (Buscador)
+                  fieldViewBuilder: (
+                    context,
+                    controller,
+                    focusNode,
+                    onFieldSubmitted,
+                  ) {
+                    return TextFormField(
+                      controller: controller,
+                      focusNode: focusNode,
+                      style: const TextStyle(fontSize: 14),
+                      decoration: InputDecoration(
+                        hintText: "Escribí la ciudad...",
+                        isDense: true,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 12,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        suffixIcon:
+                            controller.text.isNotEmpty
+                                ? IconButton(
+                                  icon: const Icon(Icons.clear, size: 18),
+                                  onPressed: () {
+                                    controller.clear();
+                                    onLocalidadChanged(null);
+                                  },
+                                )
+                                : null,
+                      ),
+                    );
+                  },
+
+                  // 3. PERSONALIZACIÓN DEL LISTADO DESPLEGABLE
+                  optionsViewBuilder: (context, onSelected, options) {
+                    return Align(
+                      alignment:
+                          Alignment.topLeft, // Alinea la lista justo debajo
+                      child: Material(
+                        elevation: 4.0,
+                        borderRadius: BorderRadius.circular(10),
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: 300,
+                            maxHeight: 200,
+                          ), // Mismo ancho que el buscador
+                          child: ListView.builder(
+                            padding: EdgeInsets.zero,
+                            shrinkWrap: true,
+                            itemCount: options.length,
+                            itemBuilder: (BuildContext context, int index) {
+                              final String option = options.elementAt(index);
+                              return ListTile(
+                                title: Text(
+                                  option,
+                                  style: const TextStyle(fontSize: 14),
+                                ),
+                                onTap: () => onSelected(option),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+
+                  onSelected:
+                      (String selection) => onLocalidadChanged(selection),
+                ),
+              ),
+            ),
+
+            IconButton(
+              icon: const Icon(Icons.add_location_alt, color: Colors.blue),
+              tooltip: "Crear nueva localidad",
+              onPressed: _mostrarDialogoNuevaLocalidad,
+            ),
+          ],
+        ),
+
+        const SizedBox(height: 10),
+
+        // 2. Selector de Punto Exacto
+        if (localidad != null)
+          InkWell(
+            onTap: () => _abrirMapaPopup(esOrigen: esOrigen),
+            child: Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.blue.withOpacity(0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    color: direccion == null ? Colors.grey : Colors.red,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      direccion ?? "Marcá el punto exacto en el mapa",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight:
+                            direccion == null
+                                ? FontWeight.normal
+                                : FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.map_outlined, size: 20),
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _seccionUbicacion1({
     required bool esOrigen,
     required String titulo,
     required String? localidad,

@@ -48,10 +48,22 @@ class AppService {
   // 1. Cargar el tema guardado al arrancar la app
   static Future<void> initTheme() async {
     final prefs = await SharedPreferences.getInstance();
-    final isDark =
-        prefs.getBool(_themeKey) ?? true; // Por defecto claro si no existe
-    themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
-    isSidebarExpanded.value = prefs.getBool(_sidebarKey) ?? true;
+    final String? savedTheme = prefs.getString('themeMode');
+
+    // 4. Asignar el valor al notifier ANTES de arrancar la app
+    if (savedTheme == 'light') {
+      themeNotifier.value = ThemeMode.light;
+    } else if (savedTheme == 'dark') {
+      themeNotifier.value = ThemeMode.dark;
+    } else {
+      themeNotifier.value = ThemeMode.system;
+    }
+
+    // final prefs = await SharedPreferences.getInstance();
+    // final isDark =
+    //     prefs.getBool(_themeKey) ?? true; // Por defecto claro si no existe
+    // themeNotifier.value = isDark ? ThemeMode.dark : ThemeMode.light;
+    // isSidebarExpanded.value = prefs.getBool(_sidebarKey) ?? true;
   }
 
   static Future<void> toggleSidebar() async {

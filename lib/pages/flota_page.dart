@@ -24,7 +24,7 @@ class _FlotaPageState extends State<FlotaPage> {
   List<Map<String, dynamic>> _datosFlota = [];
   bool _isLoading = true;
   String _queryFlota = "";
-  List<String> _tiposDisponibles = [];
+  List<Map<String, dynamic>> _tiposDisponibles = [];
   bool _loadingTipos = true;
   List<MarcaVehiculo> _listaMarcas = [];
   String? _marcaSeleccionadaId;
@@ -259,7 +259,7 @@ class _FlotaPageState extends State<FlotaPage> {
     // Seteamos la marca inicial (si estamos editando)
 
     _marcaSeleccionadaId = vehiculo?.marcaId;
-
+    print(vehiculo?.tipo);
     final anioCtrl = TextEditingController(
       text: vehiculo?.anio?.toString() ?? "",
     );
@@ -268,10 +268,10 @@ class _FlotaPageState extends State<FlotaPage> {
     final capacidadCtrl = TextEditingController(
       text: vehiculo?.capacidad ?? "",
     );
-    String? tipoSeleccionado = vehiculo?.tipo;
+    String? tipoSeleccionado = vehiculo?.tipoId;
 
     if (tipoSeleccionado == '' && _tiposDisponibles.isNotEmpty) {
-      tipoSeleccionado = _tiposDisponibles.first;
+      tipoSeleccionado = _tiposDisponibles.first['id'].toString();
     }
     showDialog(
       context: context,
@@ -379,28 +379,48 @@ class _FlotaPageState extends State<FlotaPage> {
                         Expanded(
                           child:
                               _tiposDisponibles.isEmpty
-                                  ? const Text("Cargando tipos de vehículo...")
+                                  ? const Center(
+                                    child: CircularProgressIndicator(),
+                                  )
                                   : DropdownButtonFormField<String>(
-                                    value: tipoSeleccionado,
-                                    items:
-                                        _tiposDisponibles
-                                            .map(
-                                              (t) => DropdownMenuItem(
-                                                value: t,
-                                                child: Text(t),
-                                              ),
+                                    // 1. Buscamos si el ID seleccionado existe en la lista de mapas
+                                    // Comparamos contra t['id'], no contra el nombre
+                                    value:
+                                        _tiposDisponibles.any(
+                                              (t) =>
+                                                  t['id'].toString() ==
+                                                  tipoSeleccionado,
                                             )
-                                            .toList(),
-                                    onChanged:
-                                        (v) => setState(
-                                          () => tipoSeleccionado = v,
-                                        ),
+                                            ? tipoSeleccionado
+                                            : (_tiposDisponibles.isNotEmpty
+                                                ? _tiposDisponibles.first['id']
+                                                    .toString()
+                                                : null),
+
                                     decoration: const InputDecoration(
                                       labelText: "Tipo de Vehículo",
                                       border: OutlineInputBorder(),
                                     ),
-                                    validator:
-                                        (v) => v == null ? "Requerido" : null,
+
+                                    // 2. IMPORTANTE: El value del Item DEBE SER el ID
+                                    items:
+                                        _tiposDisponibles.map((t) {
+                                          return DropdownMenuItem<String>(
+                                            value:
+                                                t['id']
+                                                    .toString(), // <--- Esto debe ser el UUID/ID
+                                            child: Text(
+                                              t['nombre'],
+                                            ), // <--- Esto es lo que el usuario lee
+                                          );
+                                        }).toList(),
+
+                                    onChanged: (v) {
+                                      setState(() {
+                                        tipoSeleccionado =
+                                            v; // Guardamos el ID seleccionado
+                                      });
+                                    },
                                   ),
                         ),
                       ],
@@ -487,7 +507,6 @@ class _FlotaPageState extends State<FlotaPage> {
         marcaId: marcaId,
         userID: user!.id,
       );
-
       if (mounted) {
         Navigator.pop(contextDialogo);
         _cargarFlota(); // Refresca la lista principal

@@ -26,7 +26,7 @@ class _TransportistasPageState extends State<TransportistasPage> {
   final _serviceTransportista = TransportistaService();
   bool _isLoading = true;
   final List<Vehiculo> _flotaTemporal = [];
-  List<String> _tiposDisponibles = [];
+  List<Map<String, dynamic>> _tiposDisponibles = [];
   bool _loadingTipos = true;
 
   // Future<void> _cargarDatos() async {
@@ -494,7 +494,7 @@ class _TransportistasPageState extends State<TransportistasPage> {
     final patenteCtrl = TextEditingController();
     final modeloCtrl = TextEditingController();
     final capacidadCtrl = TextEditingController();
-    String? tipoSeleccionado = _tiposDisponibles.first;
+    String? tipoSeleccionado = _tiposDisponibles.first['id'].toString();
 
     showDialog(
       context: context,
@@ -531,14 +531,15 @@ class _TransportistasPageState extends State<TransportistasPage> {
                           child: DropdownButtonFormField<String>(
                             value: tipoSeleccionado,
                             items:
-                                _tiposDisponibles
-                                    .map(
-                                      (t) => DropdownMenuItem(
-                                        value: t,
-                                        child: Text(t),
-                                      ),
-                                    )
-                                    .toList(),
+                                _tiposDisponibles.map((t) {
+                                  return DropdownMenuItem<String>(
+                                    value:
+                                        t['id'].toString(), // El ID para la DB
+                                    child: Text(
+                                      t['nombre'],
+                                    ), // El Nombre para el usuario
+                                  );
+                                }).toList(),
                             onChanged: (v) => tipoSeleccionado = v,
                             decoration: const InputDecoration(
                               labelText: "Tipo",
@@ -634,7 +635,10 @@ class _TransportistasPageState extends State<TransportistasPage> {
                 onPressed: () {
                   if (ctrl.text.isNotEmpty) {
                     setState(
-                      () => _tiposDisponibles.add(ctrl.text),
+                      () => _tiposDisponibles.add({
+                        'id': DateTime.now().toString(), // ID único temporal
+                        'nombre': ctrl.text,
+                      }),
                     ); // Agrega a la lista local
                     Navigator.pop(context);
                   }

@@ -29,7 +29,7 @@ class _NuevoTransportistaPageState extends State<NuevoTransportistaPage> {
   bool _loadingLocalidades = true;
   // Lista temporal de vehículos
   final List<Vehiculo> _flotaTemporal = [];
-  List<String> _tiposDisponibles = [];
+  List<Map<String, dynamic>> _tiposDisponibles = [];
   bool _loadingTipos = true;
 
   @override
@@ -317,7 +317,7 @@ class _NuevoTransportistaPageState extends State<NuevoTransportistaPage> {
     final patenteCtrl = TextEditingController();
     final modeloCtrl = TextEditingController();
     final capacidadCtrl = TextEditingController();
-    String? tipoSeleccionado = _tiposDisponibles.first; // Lista que cargaremos
+    String? tipoSeleccionado = _tiposDisponibles.first['id'].toString();
 
     showDialog(
       context: context,
@@ -373,27 +373,51 @@ class _NuevoTransportistaPageState extends State<NuevoTransportistaPage> {
                                 Expanded(
                                   child:
                                       _loadingTipos
-                                          ? const CircularProgressIndicator()
+                                          ? const Center(
+                                            child: CircularProgressIndicator(),
+                                          )
                                           : DropdownButtonFormField<String>(
+                                            // 1. Validamos que el ID seleccionado exista en la lista de mapas
                                             value:
-                                                _tiposDisponibles.contains(
-                                                      tipoSeleccionado,
+                                                _tiposDisponibles.any(
+                                                      (t) =>
+                                                          t['id'].toString() ==
+                                                          tipoSeleccionado,
                                                     )
                                                     ? tipoSeleccionado
-                                                    : _tiposDisponibles.first,
+                                                    : (_tiposDisponibles
+                                                            .isNotEmpty
+                                                        ? _tiposDisponibles
+                                                            .first['id']
+                                                            .toString()
+                                                        : null),
+
+                                            decoration: const InputDecoration(
+                                              labelText: "Tipo de Vehículo",
+                                              border: OutlineInputBorder(),
+                                            ),
+
+                                            // 2. Mapeamos la lista de objetos {'id': ..., 'nombre': ...}
                                             items:
-                                                _tiposDisponibles
-                                                    .map(
-                                                      (t) => DropdownMenuItem(
-                                                        value: t,
-                                                        child: Text(t),
-                                                      ),
-                                                    )
-                                                    .toList(),
-                                            onChanged:
-                                                (v) => setState(
-                                                  () => tipoSeleccionado = v!,
-                                                ),
+                                                _tiposDisponibles.map((t) {
+                                                  return DropdownMenuItem<
+                                                    String
+                                                  >(
+                                                    value:
+                                                        t['id']
+                                                            .toString(), // El valor interno es el ID
+                                                    child: Text(
+                                                      t['nombre'],
+                                                    ), // Lo que ve el usuario es el nombre
+                                                  );
+                                                }).toList(),
+
+                                            // 3. Al cambiar, guardamos el ID seleccionado
+                                            onChanged: (v) {
+                                              setState(() {
+                                                tipoSeleccionado = v;
+                                              });
+                                            },
                                           ),
                                 ),
                                 const SizedBox(width: 8),
@@ -468,7 +492,12 @@ class _NuevoTransportistaPageState extends State<NuevoTransportistaPage> {
                 onPressed: () {
                   if (ctrl.text.isNotEmpty) {
                     setState(
-                      () => _tiposDisponibles.add(ctrl.text),
+                      () =>
+                          _tiposDisponibles..add({
+                            'id':
+                                DateTime.now().toString(), // ID único temporal
+                            'nombre': ctrl.text,
+                          }),
                     ); // Agrega a la lista local
                     Navigator.pop(context);
                   }
